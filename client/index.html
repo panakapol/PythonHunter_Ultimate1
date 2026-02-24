@@ -506,11 +506,15 @@ document.querySelector('.btn-red[data-mode="SURVIVAL"]').addEventListener('click
 });
 
 // =====================================
-// LOCAL LEADERBOARD (Rollback)
+// LOCAL LEADERBOARD
 // =====================================
 function showLeaderboard(){
   SFX.nav();
-  const lb=G.loadLB();
+  let lb=G.loadLB();
+  
+  // แก้บั๊กที่ 2: เรียงข้อมูลใหม่ให้ชัวร์ก่อนแสดงผล เผื่อโหลดมาไม่เรียง
+  lb.sort((a,b)=>b.score-a.score); 
+
   const body=document.getElementById('lb-body');
   const empty=document.getElementById('lb-empty');
   body.innerHTML='';
@@ -918,13 +922,16 @@ function toggleReady(){
 function startGame(){ SFX.nav(); if(!MP.socket||!MP.isHost)return; MP.socket.emit('start_game'); }
 function leaveRoom(){ SFX.click(); if(MP.socket)MP.socket.disconnect(); MP._cleanup(); showScene('s-menu'); }
 function copyCode(){ const code=document.getElementById('lobby-code').textContent; navigator.clipboard?.writeText(code).then(()=>toast('คัดลอกรหัสแล้ว! '+code,'g')).catch(()=>toast(code,'b')); }
-function sendChat(ctx){ SFX.click(); const inp=document.getElementById(`chat-inp-${ctx}`); const msg=inp.value.trim(); if(!msg||!MP.socket)return; MP.socket.emit('send_chat',{text:msg}); inp.value=''; }
-document.getElementById('chat-inp-lobby').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat('lobby');});
 
-/* ------------------------------------------------------------------
-   ฟังก์ชันรับคำสั่ง FIRE และ ITEM ตัดสินใจแบบเด็ดขาด 
-   แก้ปัญหาตีกันระหว่าง Solo และ Multiplayer 
------------------------------------------------------------------- */
+// แก้บั๊กที่ 1: กดแชทแล้วไม่ให้กระทบโหมดเกม
+document.getElementById('chat-inp-lobby').addEventListener('keydown',e=>{
+  if(e.key==='Enter') {
+    sendChat('lobby');
+    e.stopPropagation(); 
+  }
+});
+function sendChat(ctx){ SFX.click(); const inp=document.getElementById(`chat-inp-${ctx}`); const msg=inp.value.trim(); if(!msg||!MP.socket)return; MP.socket.emit('send_chat',{text:msg}); inp.value=''; }
+
 function handleFire() {
   if (typeof MP !== 'undefined' && MP.active && G.isPlaying) {
     MP.submit();
