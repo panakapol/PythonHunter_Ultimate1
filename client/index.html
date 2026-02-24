@@ -43,7 +43,7 @@
       </div>
 
       <div class="champ" id="champ-bar">
-        🏆 WORLD CHAMPION: <span class="cval" id="cname">LOADING...</span> | <span class="cval" id="cscore">0</span>
+        🏆 CHAMPION: <span class="cval" id="cname">---</span> | <span class="cval" id="cscore">0</span>
       </div>
 
       <button class="btn btn-lg" onclick="goMission()">⚡ [ INITIATE HUNT ]</button>
@@ -69,6 +69,8 @@
         <input id="room-code-inp" class="inp inp-sm" placeholder="XXXXX" maxlength="5" style="text-align:center;letter-spacing:8px;">
         <button class="btn btn-lg btn-blue" onclick="joinRoom()">[ เข้าห้อง ]</button>
       </div>
+
+      <div id="multi-status" style="margin-top:10px;font-family:var(--font3);font-size:.75rem;color:var(--dim);text-align:center;letter-spacing:2px;"></div>
     </div>
   </div>
   <p style="font-family:var(--font3);font-size:.6rem;color:var(--dim);margin-top:8px;letter-spacing:2px;">DEV: PANAKAPOL & KONGPHOP · v4.0</p>
@@ -106,7 +108,8 @@
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <span style="font-family:var(--font3);font-size:.7rem;color:var(--b);letter-spacing:2px;">
-        MODE: <span id="lobby-mode" class="txt-g">---</span> &nbsp;|&nbsp; TIME: <span id="lobby-time" class="txt-g">---</span>s
+        MODE: <span id="lobby-mode" class="txt-g">---</span> &nbsp;|&nbsp;
+        TIME: <span id="lobby-time" class="txt-g">---</span>s
       </span>
       <span style="font-family:var(--font2);font-size:.68rem;color:var(--dim);" id="lobby-count">0/8 players</span>
     </div>
@@ -155,7 +158,10 @@
   </div>
 
   <div class="code-box">
-    <div class="q-meta"><span class="q-tag" id="q-mode">MODULE</span><span class="q-lvl" id="q-lvl">LVL —</span></div>
+    <div class="q-meta">
+      <span class="q-tag" id="q-mode">MODULE</span>
+      <span class="q-lvl" id="q-lvl">LVL —</span>
+    </div>
     <div class="q-txt" id="q-txt">Loading...</div>
     <div class="code-line typing" id="q-code">_</div>
   </div>
@@ -215,8 +221,8 @@
 
 <section id="s-lb" class="scene">
 <div class="mc" style="width:100%;">
-  <h2 class="title" data-t="WORLD RANKING" style="text-align:center;font-size:clamp(1.4rem,5vw,2rem);">WORLD RANKING</h2>
-  <p class="sub" style="text-align:center;">TOP HUNTERS ON PLANET EARTH</p>
+  <h2 class="title" data-t="HALL OF FAME" style="text-align:center;font-size:clamp(1.4rem,5vw,2rem);">HALL OF FAME</h2>
+  <p class="sub" style="text-align:center;">TOP HUNTERS ALL TIME</p>
   <div class="panel">
     <table style="width:100%;border-collapse:collapse;font-family:var(--font2);font-size:.8rem;">
       <thead>
@@ -289,7 +295,7 @@
 <script>
 /* ============================================================
    PYTHON HUNTER v4 — CLIENT JS
-   Full rewrite: Solo + Multiplayer (Socket.IO) + MongoDB
+   Full rewrite: Solo + Multiplayer (Socket.IO)
    ============================================================ */
 
 (function(){
@@ -430,22 +436,16 @@ document.querySelector('.btn-red[data-mode="SURVIVAL"]').addEventListener('click
 });
 
 // =====================================
-// GLOBAL LEADERBOARD (FETCH API)
+// LOCAL LEADERBOARD (Rollback)
 // =====================================
-async function showLeaderboard(){
+function showLeaderboard(){
   SFX.nav();
-  const empty=document.getElementById('lb-empty');
+  const lb=G.loadLB();
   const body=document.getElementById('lb-body');
-  
-  body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--g);">LOADING FROM DATABASE...</td></tr>';
-  empty.style.display='none';
-  showScene('s-lb');
-
-  const lb = await G.loadLB();
+  const empty=document.getElementById('lb-empty');
   body.innerHTML='';
-  if(!lb || !lb.length){
-    empty.style.display='block';
-  } else {
+  if(!lb.length){empty.style.display='block';}
+  else{
     empty.style.display='none';
     const icons=['🥇','🥈','🥉'];
     lb.forEach((p,i)=>{
@@ -454,19 +454,20 @@ async function showLeaderboard(){
       tr.innerHTML=`
         <td style="padding:9px;text-align:left;color:${clr};font-family:var(--font1);">${icons[i]||i+1}</td>
         <td style="padding:9px;color:#fff;font-family:var(--font2);letter-spacing:1px;">${p.name}</td>
-        <td style="padding:9px;text-align:right;color:var(--y);font-weight:bold;font-family:var(--font1);">${(p.score||0).toLocaleString()}</td>
+        <td style="padding:9px;text-align:right;color:var(--y);font-weight:bold;font-family:var(--font1);">${p.score.toLocaleString()}</td>
         <td style="padding:9px;text-align:right;color:var(--dim);font-size:.7rem;">${p.mode}</td>
       `;
       body.appendChild(tr);
     });
   }
+  showScene('s-lb');
 }
 
-async function updateChampion(){
-  const lb = await G.loadLB();
-  if(lb && lb.length > 0){
-    document.getElementById('cname').textContent = lb[0].name;
-    document.getElementById('cscore').textContent = (lb[0].score||0).toLocaleString();
+function updateChampion(){
+  const lb=G.loadLB();
+  if(lb.length){
+    document.getElementById('cname').textContent=lb[0].name;
+    document.getElementById('cscore').textContent=lb[0].score.toLocaleString();
   }
 }
 
@@ -477,27 +478,13 @@ const G={
   hints:1,potions:1,skips:1, winScore:800,defaultItems:1,
   isPlaying:false, timerInterval:null, typingTimer:null, lowTimePlayed:false, lastMode:'BASICS',
 
-  async loadLB(){
-    try {
-      const res = await fetch('/api/leaderboard');
-      const data = await res.json();
-      return data;
-    } catch(e) {
-      console.error('Cannot connect to DB', e);
-      return [];
-    }
+  loadLB(){
+    try{return JSON.parse(localStorage.getItem('ph_lb_v4'))||[];}catch(e){return[];}
   },
-
-  async saveLB(entry){
-    try {
-      await fetch('/api/leaderboard', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(entry)
-      });
-    } catch(e) {
-      console.error('Failed to save to DB', e);
-    }
+  saveLB(entry){
+    const lb=this.loadLB();
+    lb.push(entry);lb.sort((a,b)=>b.score-a.score);
+    try{localStorage.setItem('ph_lb_v4',JSON.stringify(lb.slice(0,15)));}catch(e){}
   },
 
   shuffle(a){
@@ -611,14 +598,14 @@ const G={
     }
   },
 
-  async _win(){
+  _win(){
     this.isPlaying=false;clearInterval(this.timerInterval);SFX.win(); flash('#ffd700');
-    await this.saveLB({name:this.playerName,score:this.score,mode:this.lastMode});
+    this.saveLB({name:this.playerName,score:this.score,mode:this.lastMode});
     updateChampion(); this._showEnd(true);
   },
-  async _lose(){
+  _lose(){
     this.isPlaying=false;clearInterval(this.timerInterval);SFX.lose(); flash('#ff2d5b');
-    await this.saveLB({name:this.playerName,score:this.score,mode:this.lastMode});
+    this.saveLB({name:this.playerName,score:this.score,mode:this.lastMode});
     updateChampion(); this._showEnd(false);
   },
 
@@ -775,15 +762,12 @@ const MP={
     });
   },
 
-  async _showMultiEnd(sb){
+  _showMultiEnd(sb){
     document.getElementById('end-title').textContent='FINAL RESULTS'; document.getElementById('end-title').className='title win-text';
     const me=sb.find(p=>p.socketId===this.myId)||{name:this.myName,score:G.score};
     document.getElementById('end-name').textContent=me.name; document.getElementById('end-score').textContent=me.score.toLocaleString(); document.getElementById('end-mode').textContent=this.gameMode;
     document.getElementById('end-review').style.display='none'; document.getElementById('end-multi-sb').style.display='block';
     
-    // บันทึกคะแนนผู้เล่นตอนจบ Multi ลง DB ด้วย
-    await G.saveLB({name: this.myName, score: G.score, mode: this.gameMode});
-
     const list=document.getElementById('end-sb-list');list.innerHTML=''; const icons=['🥇','🥈','🥉'];
     sb.forEach((p,i)=>{
       const isMe=p.socketId===this.myId; const d=document.createElement('div'); d.className=`esb-row${isMe?' me':''}`; const rc=i===0?'r1':i===1?'r2':i===2?'r3':'';
