@@ -170,8 +170,8 @@
 
   <div class="izone" id="izone">
     <span class="iprompt">❯</span>
-    <input id="ans-inp" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="type answer here...">
-    <button class="fire-btn" onclick="G.submit()">FIRE</button>
+    <input id="ans-inp" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="type answer here..." onkeydown="if(event.key==='Enter'){ if(window.MP && MP.active && G.isPlaying) MP.submit(); else G.submit(); }">
+    <button class="fire-btn" onclick="if(window.MP && MP.active && G.isPlaying) MP.submit(); else G.submit();">FIRE</button>
   </div>
 
   <div class="pups">
@@ -613,9 +613,6 @@ const G={
     SFX.nav(); if(MP.active){showScene('s-lobby');}else{G.startSolo(G.lastMode);}
   },
 
-  // -------------------------------------------------------------
-  // แก้ไข 1: ข้อความจบเกมสำหรับ Solo ให้เงากับตัวหนังสือตรงกัน
-  // -------------------------------------------------------------
   _showEnd(won){
     const txt = won ? 'MISSION COMPLETE' : 'SESSION END';
     document.getElementById('end-title').textContent = txt;
@@ -716,7 +713,7 @@ const MP={
     });
     s.on('timer_tick',({time})=>{
       G.timer=time; const tbox=document.getElementById('hud-timer').closest('.hbox-b');
-      if(time<=10){ tbox.classList.add('danger'); if(!G.lowTimePlayed||time%2===0){SFX.lowtime();G.lowTimePlayed=true;} }else tbox.classList.remove('danger');
+      if(time<=10){ tbox.classList.add('danger'); if(!G.lowTimePlayed||this.timer%2===0){SFX.lowtime();G.lowTimePlayed=true;} }else tbox.classList.remove('danger');
       document.getElementById('hud-timer').textContent=time;
     });
     s.on('answer_result',data=>{
@@ -771,9 +768,6 @@ const MP={
     });
   },
 
-  // -------------------------------------------------------------
-  // แก้ไข 2: ข้อความจบเกมหลายคน ให้เงากับตัวหนังสือตรงกัน
-  // -------------------------------------------------------------
   _showMultiEnd(sb){
     document.getElementById('end-title').textContent='FINAL RESULTS'; 
     document.getElementById('end-title').className='title win-text';
@@ -857,11 +851,10 @@ function copyCode(){ const code=document.getElementById('lobby-code').textConten
 function sendChat(ctx){ SFX.click(); const inp=document.getElementById(`chat-inp-${ctx}`); const msg=inp.value.trim(); if(!msg||!MP.socket)return; MP.socket.emit('send_chat',{text:msg}); inp.value=''; }
 document.getElementById('chat-inp-lobby').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat('lobby');});
 
-document.getElementById('ans-inp').addEventListener('keydown',e=>{ if(e.key==='Enter'){ if(MP.active&&G.isPlaying) MP.submit(); else G.submit(); } });
-document.querySelector('.fire-btn').addEventListener('click',()=>{ if(MP.active&&G.isPlaying) MP.submit(); else G.submit(); });
+// ลบ Event Listener เดิมออก จะได้ไม่ทับซ้อนกัน
 
 const origUseItem=G.useItem.bind(G);
-G.useItem=function(item){ if(MP.active&&G.isPlaying)MP.useItem(item); else origUseItem(item); };
+G.useItem=function(item){ if(window.MP && MP.active && G.isPlaying)MP.useItem(item); else origUseItem(item); };
 
 updateChampion();
 
