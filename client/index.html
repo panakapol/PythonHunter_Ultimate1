@@ -43,7 +43,7 @@
       </div>
 
       <div class="champ" id="champ-bar">
-        🏆 CHAMPION: <span class="cval" id="cname">---</span> | <span class="cval" id="cscore">0</span>
+        🏆 WORLD CHAMPION: <span class="cval" id="cname">LOADING...</span> | <span class="cval" id="cscore">0</span>
       </div>
 
       <button class="btn btn-lg" onclick="goMission()">⚡ [ INITIATE HUNT ]</button>
@@ -69,8 +69,6 @@
         <input id="room-code-inp" class="inp inp-sm" placeholder="XXXXX" maxlength="5" style="text-align:center;letter-spacing:8px;">
         <button class="btn btn-lg btn-blue" onclick="joinRoom()">[ เข้าห้อง ]</button>
       </div>
-
-      <div id="multi-status" style="margin-top:10px;font-family:var(--font3);font-size:.75rem;color:var(--dim);text-align:center;letter-spacing:2px;"></div>
     </div>
   </div>
   <p style="font-family:var(--font3);font-size:.6rem;color:var(--dim);margin-top:8px;letter-spacing:2px;">DEV: PANAKAPOL & KONGPHOP · v4.0</p>
@@ -94,7 +92,6 @@
   </div>
 
   <button class="btn btn-lg btn-red" data-mode="SURVIVAL" style="margin-top:4px;width:100%;">☠ SURVIVAL MODE — HARDCORE ONLY</button>
-
   <button class="btn btn-lg" style="background:transparent;border-color:var(--border);margin-top:8px;" onclick="showScene('s-menu')">[ ← BACK ]</button>
 </div>
 </section>
@@ -109,8 +106,7 @@
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <span style="font-family:var(--font3);font-size:.7rem;color:var(--b);letter-spacing:2px;">
-        MODE: <span id="lobby-mode" class="txt-g">---</span> &nbsp;|&nbsp;
-        TIME: <span id="lobby-time" class="txt-g">---</span>s
+        MODE: <span id="lobby-mode" class="txt-g">---</span> &nbsp;|&nbsp; TIME: <span id="lobby-time" class="txt-g">---</span>s
       </span>
       <span style="font-family:var(--font2);font-size:.68rem;color:var(--dim);" id="lobby-count">0/8 players</span>
     </div>
@@ -159,10 +155,7 @@
   </div>
 
   <div class="code-box">
-    <div class="q-meta">
-      <span class="q-tag" id="q-mode">MODULE</span>
-      <span class="q-lvl" id="q-lvl">LVL —</span>
-    </div>
+    <div class="q-meta"><span class="q-tag" id="q-mode">MODULE</span><span class="q-lvl" id="q-lvl">LVL —</span></div>
     <div class="q-txt" id="q-txt">Loading...</div>
     <div class="code-line typing" id="q-code">_</div>
   </div>
@@ -222,8 +215,8 @@
 
 <section id="s-lb" class="scene">
 <div class="mc" style="width:100%;">
-  <h2 class="title" data-t="HALL OF FAME" style="text-align:center;font-size:clamp(1.4rem,5vw,2rem);">HALL OF FAME</h2>
-  <p class="sub" style="text-align:center;">TOP HUNTERS ALL TIME</p>
+  <h2 class="title" data-t="WORLD RANKING" style="text-align:center;font-size:clamp(1.4rem,5vw,2rem);">WORLD RANKING</h2>
+  <p class="sub" style="text-align:center;">TOP HUNTERS ON PLANET EARTH</p>
   <div class="panel">
     <table style="width:100%;border-collapse:collapse;font-family:var(--font2);font-size:.8rem;">
       <thead>
@@ -296,10 +289,9 @@
 <script>
 /* ============================================================
    PYTHON HUNTER v4 — CLIENT JS
-   Full rewrite: Solo + Multiplayer (Socket.IO)
+   Full rewrite: Solo + Multiplayer (Socket.IO) + MongoDB
    ============================================================ */
 
-/* ─── MATRIX RAIN ───────────────────────────────────────── */
 (function(){
   const c=document.getElementById('bg-canvas'),x=c.getContext('2d');
   let drops=[];
@@ -323,46 +315,23 @@
   },45);
 })();
 
-/* ─── SOUND ENGINE ──────────────────────────────────────── */
 const SFX=(()=>{
   let ctx,master,muted=false;
   function init(){
     if(ctx)return;
-    try{
-      ctx=new(window.AudioContext||window.webkitAudioContext)();
-      master=ctx.createGain();master.gain.value=.65;
-      master.connect(ctx.destination);
-    }catch(e){}
+    try{ ctx=new(window.AudioContext||window.webkitAudioContext)(); master=ctx.createGain();master.gain.value=.65; master.connect(ctx.destination); }catch(e){}
   }
   function resume(){if(ctx&&ctx.state==='suspended')ctx.resume();}
   function tone(freq,type,dur,vol=.12,delay=0){
     if(muted||!ctx)return;resume();
-    try{
-      const o=ctx.createOscillator(),g=ctx.createGain();
-      o.type=type;o.frequency.setValueAtTime(freq,ctx.currentTime+delay);
-      g.gain.setValueAtTime(0,ctx.currentTime+delay);
-      g.gain.linearRampToValueAtTime(vol,ctx.currentTime+delay+.01);
-      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+delay+dur);
-      o.connect(g);g.connect(master);
-      o.start(ctx.currentTime+delay);o.stop(ctx.currentTime+delay+dur);
-    }catch(e){}
+    try{ const o=ctx.createOscillator(),g=ctx.createGain(); o.type=type;o.frequency.setValueAtTime(freq,ctx.currentTime+delay); g.gain.setValueAtTime(0,ctx.currentTime+delay); g.gain.linearRampToValueAtTime(vol,ctx.currentTime+delay+.01); g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+delay+dur); o.connect(g);g.connect(master); o.start(ctx.currentTime+delay);o.stop(ctx.currentTime+delay+dur); }catch(e){}
   }
   function noise(dur,vol=.05){
     if(muted||!ctx)return;resume();
-    try{
-      const buf=ctx.createBuffer(1,ctx.sampleRate*dur,ctx.sampleRate);
-      const d=buf.getChannelData(0);
-      for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1);
-      const s=ctx.createBufferSource(),g=ctx.createGain(),f=ctx.createBiquadFilter();
-      f.type='bandpass';f.frequency.value=800;
-      s.buffer=buf;g.gain.setValueAtTime(vol,ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+dur);
-      s.connect(f);f.connect(g);g.connect(master);s.start();s.stop(ctx.currentTime+dur);
-    }catch(e){}
+    try{ const buf=ctx.createBuffer(1,ctx.sampleRate*dur,ctx.sampleRate); const d=buf.getChannelData(0); for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1); const s=ctx.createBufferSource(),g=ctx.createGain(),f=ctx.createBiquadFilter(); f.type='bandpass';f.frequency.value=800; s.buffer=buf;g.gain.setValueAtTime(vol,ctx.currentTime); g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+dur); s.connect(f);f.connect(g);g.connect(master);s.start();s.stop(ctx.currentTime+dur); }catch(e){}
   }
   return{
-    init,
-    toggle(){muted=!muted;if(master)master.gain.value=muted?0:.65;return muted;},
+    init, toggle(){muted=!muted;if(master)master.gain.value=muted?0:.65;return muted;},
     click(){tone(880,'square',.05,.07);tone(440,'square',.05,.04,.03);},
     nav(){tone(600,'sine',.08,.1);tone(900,'sine',.06,.08,.05);},
     correct(){tone(523,'sine',.1,.14);tone(659,'sine',.12,.12,.05);tone(784,'sine',.15,.17,.1);noise(.05,.03);},
@@ -373,29 +342,20 @@ const SFX=(()=>{
     bonus(){[1047,1319,1568,2093].forEach((f,i)=>tone(f,'sine',.15,.14,i*.07));},
     lowtime(){tone(440,'square',.08,.1);},
     item(){tone(700,'triangle',.1,.11);tone(900,'sine',.15,.09,.05);},
-    join(){tone(660,'sine',.1,.12);tone(880,'sine',.12,.1,.07);},
     ctx: ()=> ctx
   };
 })();
 
 document.getElementById('snd-btn').addEventListener('click',e=>{
-  SFX.init();
-  const m=SFX.toggle();
-  e.target.textContent=m?'🔇 OFF':'🔊 ON';
+  SFX.init(); const m=SFX.toggle(); e.target.textContent=m?'🔇 OFF':'🔊 ON';
 });
 
-/* ─── UNLOCK AUDIO FOR MOBILE ───────────────────────────── */
 const unlockAudio = () => {
-  SFX.init();
-  if (SFX.ctx() && SFX.ctx().state === 'suspended') {
-    SFX.ctx().resume();
-  }
+  SFX.init(); if (SFX.ctx() && SFX.ctx().state === 'suspended') SFX.ctx().resume();
   ['touchstart', 'touchend', 'click', 'keydown'].forEach(e => document.body.removeEventListener(e, unlockAudio));
 };
 ['touchstart', 'touchend', 'click', 'keydown'].forEach(e => document.body.addEventListener(e, unlockAudio, {once:true}));
 
-
-/* ─── PARTICLES ─────────────────────────────────────────── */
 const PC=document.getElementById('particles');
 function burst(x,y,color='#00ff41',n=12){
   for(let i=0;i<n;i++){
@@ -408,11 +368,9 @@ function burst(x,y,color='#00ff41',n=12){
   }
 }
 function burstEl(el,color,n){
-  const r=el.getBoundingClientRect();
-  burst(r.left+r.width/2,r.top+r.height/2,color,n);
+  const r=el.getBoundingClientRect(); burst(r.left+r.width/2,r.top+r.height/2,color,n);
 }
 
-/* ─── UTILS ─────────────────────────────────────────────── */
 function toast(msg,type='g'){
   document.querySelectorAll('.toast').forEach(t=>t.remove());
   const d=document.createElement('div');d.className='toast';
@@ -431,72 +389,63 @@ function floatDmg(msg,type){
   arena.appendChild(d);setTimeout(()=>d.remove(),700);
 }
 function showScene(id){
-  document.querySelectorAll('.scene').forEach(s=>{
-    s.classList.remove('on');
-  });
-  const t=document.getElementById(id);
-  t.classList.add('on');
-  t.scrollTop=0;
+  document.querySelectorAll('.scene').forEach(s=>s.classList.remove('on'));
+  const t=document.getElementById(id); t.classList.add('on'); t.scrollTop=0;
 }
 function addChat(box,data){
-  const d=document.createElement('div');
-  d.className=data.system?'chat-msg sys':'chat-msg';
+  const d=document.createElement('div'); d.className=data.system?'chat-msg sys':'chat-msg';
   if(data.system)d.innerHTML=`<span class="ct">${data.text}</span>`;
   else d.innerHTML=`<span class="cn">[${data.name}]</span><span class="ct">${data.text}</span>`;
   box.appendChild(d);box.scrollTop=box.scrollHeight;
 }
 
-/* ─── TABS ──────────────────────────────────────────────── */
 function switchTab(tab){
   SFX.click();
   document.getElementById('tab-solo').style.display=tab==='solo'?'block':'none';
   document.getElementById('tab-multi').style.display=tab==='multi'?'block':'none';
-  document.querySelectorAll('.tab').forEach((t,i)=>{
-    t.classList.toggle('on',(i===0&&tab==='solo')||(i===1&&tab==='multi'));
-  });
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',(i===0&&tab==='solo')||(i===1&&tab==='multi')));
 }
 
-/* ─── TIME SELECTOR ─────────────────────────────────────── */
 document.querySelectorAll('.t-btn').forEach(b=>{
   b.addEventListener('click',()=>{
-    SFX.click();
-    document.querySelectorAll('.t-btn').forEach(x=>x.classList.remove('on'));
-    b.classList.add('on');
+    SFX.click(); document.querySelectorAll('.t-btn').forEach(x=>x.classList.remove('on')); b.classList.add('on');
   });
 });
 function getSelectedTime(){
-  const b=document.querySelector('.t-btn.on');
-  return b?parseInt(b.dataset.t):60;
+  const b=document.querySelector('.t-btn.on'); return b?parseInt(b.dataset.t):60;
 }
 
-/* ─── MISSION BUTTONS ───────────────────────────────────── */
 function goMission(){
-  SFX.nav();
-  const n=document.getElementById('name-solo').value.trim();
+  SFX.nav(); const n=document.getElementById('name-solo').value.trim();
   if(!n){toast('ใส่ชื่อก่อน!','r');document.getElementById('name-solo').focus();return;}
-  G.playerName=n.toUpperCase().slice(0,12);
-  G.selectedTime=getSelectedTime();
-  G.mode='solo';
+  G.playerName=n.toUpperCase().slice(0,12); G.selectedTime=getSelectedTime(); G.mode='solo';
   showScene('s-mission');
 }
 document.getElementById('mission-grid').addEventListener('click',e=>{
-  const btn=e.target.closest('.mbtn[data-mode]');
-  if(!btn)return;
+  const btn=e.target.closest('.mbtn[data-mode]'); if(!btn)return;
   SFX.nav();G.startSolo(btn.dataset.mode);
 });
 document.querySelector('.btn-red[data-mode="SURVIVAL"]').addEventListener('click',()=>{
   SFX.nav();G.startSolo('SURVIVAL');
 });
 
-/* ─── LEADERBOARD ───────────────────────────────────────── */
-function showLeaderboard(){
+// =====================================
+// GLOBAL LEADERBOARD (FETCH API)
+// =====================================
+async function showLeaderboard(){
   SFX.nav();
-  const lb=G.loadLB();
-  const body=document.getElementById('lb-body');
   const empty=document.getElementById('lb-empty');
+  const body=document.getElementById('lb-body');
+  
+  body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--g);">LOADING FROM DATABASE...</td></tr>';
+  empty.style.display='none';
+  showScene('s-lb');
+
+  const lb = await G.loadLB();
   body.innerHTML='';
-  if(!lb.length){empty.style.display='block';}
-  else{
+  if(!lb || !lb.length){
+    empty.style.display='block';
+  } else {
     empty.style.display='none';
     const icons=['🥇','🥈','🥉'];
     lb.forEach((p,i)=>{
@@ -505,95 +454,79 @@ function showLeaderboard(){
       tr.innerHTML=`
         <td style="padding:9px;text-align:left;color:${clr};font-family:var(--font1);">${icons[i]||i+1}</td>
         <td style="padding:9px;color:#fff;font-family:var(--font2);letter-spacing:1px;">${p.name}</td>
-        <td style="padding:9px;text-align:right;color:var(--y);font-weight:bold;font-family:var(--font1);">${p.score.toLocaleString()}</td>
+        <td style="padding:9px;text-align:right;color:var(--y);font-weight:bold;font-family:var(--font1);">${(p.score||0).toLocaleString()}</td>
         <td style="padding:9px;text-align:right;color:var(--dim);font-size:.7rem;">${p.mode}</td>
       `;
       body.appendChild(tr);
     });
   }
-  showScene('s-lb');
 }
 
-/* ─── CHAMPION BAR ──────────────────────────────────────── */
-function updateChampion(){
-  const lb=G.loadLB();
-  if(lb.length){
-    document.getElementById('cname').textContent=lb[0].name;
-    document.getElementById('cscore').textContent=lb[0].score.toLocaleString();
+async function updateChampion(){
+  const lb = await G.loadLB();
+  if(lb && lb.length > 0){
+    document.getElementById('cname').textContent = lb[0].name;
+    document.getElementById('cscore').textContent = (lb[0].score||0).toLocaleString();
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   GAME ENGINE — SOLO
-═══════════════════════════════════════════════════════════ */
 const G={
-  playerName:'PLAYER',
-  selectedTime:60,
-  mode:'solo',
+  playerName:'PLAYER', selectedTime:60, mode:'solo',
   score:0,hp:100,timer:60,combo:0,
-  questions:[],qIdx:0,
-  currentQ:null,
-  sessionHistory:[],
-  hints:1,potions:1,skips:1,
-  winScore:800,defaultItems:1,
-  isPlaying:false,
-  timerInterval:null,
-  typingTimer:null,
-  lowTimePlayed:false,
-  lastMode:'BASICS',
+  questions:[],qIdx:0, currentQ:null, sessionHistory:[],
+  hints:1,potions:1,skips:1, winScore:800,defaultItems:1,
+  isPlaying:false, timerInterval:null, typingTimer:null, lowTimePlayed:false, lastMode:'BASICS',
 
-  loadLB(){
-    try{return JSON.parse(localStorage.getItem('ph_lb_v4'))||[];}catch(e){return[];}
+  async loadLB(){
+    try {
+      const res = await fetch('/api/leaderboard');
+      const data = await res.json();
+      return data;
+    } catch(e) {
+      console.error('Cannot connect to DB', e);
+      return [];
+    }
   },
-  saveLB(entry){
-    const lb=this.loadLB();
-    lb.push(entry);lb.sort((a,b)=>b.score-a.score);
-    try{localStorage.setItem('ph_lb_v4',JSON.stringify(lb.slice(0,15)));}catch(e){}
+
+  async saveLB(entry){
+    try {
+      await fetch('/api/leaderboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry)
+      });
+    } catch(e) {
+      console.error('Failed to save to DB', e);
+    }
   },
 
   shuffle(a){
-    const r=[...a];
-    for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];}
-    return r;
+    const r=[...a]; for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];} return r;
   },
 
   startSolo(modeKey){
-    this.lastMode=modeKey;
-    SFX.init();
+    this.lastMode=modeKey; SFX.init();
     const timeMap={60:{win:800,items:1},120:{win:1500,items:2},180:{win:2000,items:3}};
     const cfg=timeMap[this.selectedTime]||timeMap[60];
-    this.winScore=cfg.win;this.defaultItems=cfg.items;
-    this.score=0;this.hp=100;this.timer=this.selectedTime;this.combo=0;
-    this.sessionHistory=[];
-    
-    this.isPlaying=false;
-    this.lowTimePlayed=false;
-    this.hints=cfg.items;this.potions=cfg.items;this.skips=cfg.items;
+    this.winScore=cfg.win; this.defaultItems=cfg.items;
+    this.score=0; this.hp=100; this.timer=this.selectedTime; this.combo=0;
+    this.sessionHistory=[]; this.isPlaying=false; this.lowTimePlayed=false;
+    this.hints=cfg.items; this.potions=cfg.items; this.skips=cfg.items;
 
-    let pool=modeKey==='SURVIVAL'
-      ?SOLO_QUESTIONS.filter(q=>q.level>=6)
-      :SOLO_QUESTIONS.filter(q=>q.mode===modeKey);
+    let pool=modeKey==='SURVIVAL' ? SOLO_QUESTIONS.filter(q=>q.level>=6) : SOLO_QUESTIONS.filter(q=>q.mode===modeKey);
     if(!pool.length)pool=SOLO_QUESTIONS;
-    this.questions=this.shuffle(pool);this.qIdx=0;
+    this.questions=this.shuffle(pool); this.qIdx=0;
 
-    const mon=document.getElementById('monster');
-    mon.classList.toggle('boss',modeKey==='SURVIVAL');
-    this._clearBossRings();
-    if(modeKey==='SURVIVAL')this._addBossRings();
+    const mon=document.getElementById('monster'); mon.classList.toggle('boss',modeKey==='SURVIVAL');
+    this._clearBossRings(); if(modeKey==='SURVIVAL')this._addBossRings();
 
     document.getElementById('hud-name').textContent=this.playerName;
     document.getElementById('live-sb').style.display='none';
-    
-    this._updateHUD();
-    document.getElementById('hint-line').textContent='';
+    this._updateHUD(); document.getElementById('hint-line').textContent='';
 
     showScene('s-game');
-    
     setTimeout(()=>{
-      this.isPlaying=true;
-      this._updatePups();
-      this._nextQ();
-      this._startTimer();
+      this.isPlaying=true; this._updatePups(); this._nextQ(); this._startTimer();
       document.getElementById('ans-inp').focus();
     },350);
   },
@@ -610,34 +543,25 @@ const G={
 
   _nextQ(){
     if(this.questions.length===0){
-      let pool=this.lastMode==='SURVIVAL'
-        ?SOLO_QUESTIONS.filter(q=>q.level>=6)
-        :SOLO_QUESTIONS.filter(q=>q.mode===this.lastMode);
+      let pool=this.lastMode==='SURVIVAL' ? SOLO_QUESTIONS.filter(q=>q.level>=6) : SOLO_QUESTIONS.filter(q=>q.mode===this.lastMode);
       if(!pool.length)pool=SOLO_QUESTIONS;
       this.questions=this.shuffle(pool);this.qIdx=0;
     }
-    this.currentQ=this.questions[this.qIdx%this.questions.length];
-    this.qIdx++;
-    if(!this.currentQ.inHistory)this.sessionHistory.push(this.currentQ);
-    this.currentQ.inHistory=true;
+    this.currentQ=this.questions[this.qIdx%this.questions.length]; this.qIdx++;
+    if(!this.currentQ.inHistory)this.sessionHistory.push(this.currentQ); this.currentQ.inHistory=true;
 
-    document.getElementById('q-txt').textContent=this.currentQ.text;
-    document.getElementById('q-mode').textContent=this.currentQ.mode;
+    document.getElementById('q-txt').textContent=this.currentQ.text; document.getElementById('q-mode').textContent=this.currentQ.mode;
     const lvlCols=['','#00ff41','#00e5ff','#ffe500','#ff7b00','#c850ff','#ff2d5b','#ff2d5b'];
-    const lv=this.currentQ.level||1;
-    const lel=document.getElementById('q-lvl');
+    const lv=this.currentQ.level||1; const lel=document.getElementById('q-lvl');
     lel.textContent=`LVL ${lv}`;lel.style.color=lvlCols[lv]||'#00ff41';
 
-    this._typeCode(this.currentQ.code);
-    document.getElementById('ans-inp').value='';
-    document.getElementById('hint-line').textContent='';
-    document.getElementById('izone').className='izone';
+    this._typeCode(this.currentQ.code); document.getElementById('ans-inp').value='';
+    document.getElementById('hint-line').textContent=''; document.getElementById('izone').className='izone';
   },
 
   _typeCode(txt){
     if(this.typingTimer)clearTimeout(this.typingTimer);
-    const el=document.getElementById('q-code');
-    el.textContent='';el.classList.add('typing');
+    const el=document.getElementById('q-code'); el.textContent='';el.classList.add('typing');
     let i=0;const spd=txt.length>28?7:13;
     const type=()=>{
       if(i<=txt.length){el.textContent=txt.substring(0,i);i++;this.typingTimer=setTimeout(type,spd);}
@@ -647,101 +571,71 @@ const G={
 
   submit(){
     if(!this.isPlaying||!this.currentQ)return;
-    const ans=document.getElementById('ans-inp').value.trim();
-    if(!ans)return;
-    SFX.init();
-    const correct=this.currentQ.ans.toLowerCase().trim();
-    if(ans.toLowerCase()===correct)this._onCorrect();
-    else this._onWrong();
+    const ans=document.getElementById('ans-inp').value.trim(); if(!ans)return;
+    SFX.init(); const correct=this.currentQ.ans.toLowerCase().trim();
+    if(ans.toLowerCase()===correct)this._onCorrect(); else this._onWrong();
   },
 
   _onCorrect(){
-    this.combo++;
-    const bonus=this.combo>=5?75:this.combo>=3?50:0;
-    const earned=150+bonus;
-    this.score+=earned;
+    this.combo++; const bonus=this.combo>=5?75:this.combo>=3?50:0; const earned=150+bonus; this.score+=earned;
     SFX.correct();
     if(this.combo%3===0&&this.combo>0){SFX.combo();this.timer+=10;SFX.bonus();toast('⏱ +10s TIME BONUS!','y');}
     if(this.combo===5){this._updateHP(Math.min(100,this.hp+10));toast('🔥 COMBO ×5 → HP+10!','g');}
-    if(bonus>0)floatDmg(`+${earned} ×${this.combo}!`,'combo');
-    else floatDmg(`+${earned}`,'good');
+    if(bonus>0)floatDmg(`+${earned} ×${this.combo}!`,'combo'); else floatDmg(`+${earned}`,'good');
     burstEl(document.getElementById('monster'),this.lastMode==='SURVIVAL'?'#ff2d5b':'#00ff41',14);
-    const mon=document.getElementById('monster');
-    mon.classList.add('hit');setTimeout(()=>mon.classList.remove('hit'),180);
-    document.getElementById('izone').classList.add('ok');
-    this._updateHUD();
+    const mon=document.getElementById('monster'); mon.classList.add('hit');setTimeout(()=>mon.classList.remove('hit'),180);
+    document.getElementById('izone').classList.add('ok'); this._updateHUD();
     if(this.score>=this.winScore){setTimeout(()=>this._win(),300);return;}
     setTimeout(()=>{document.getElementById('izone').classList.remove('ok');this._nextQ();document.getElementById('ans-inp').focus();},320);
   },
 
   _onWrong(){
-    this.combo=0;
-    this.hp=Math.max(0,this.hp-20);
-    SFX.wrong();
-    floatDmg('WRONG!','bad');
-    flash('#ff2d5b');
-    document.getElementById('izone').classList.add('wrong');
-    document.getElementById('ans-inp').value='';
-    this._updateHUD();
+    this.combo=0; this.hp=Math.max(0,this.hp-20); SFX.wrong(); floatDmg('WRONG!','bad'); flash('#ff2d5b');
+    document.getElementById('izone').classList.add('wrong'); document.getElementById('ans-inp').value=''; this._updateHUD();
     setTimeout(()=>document.getElementById('izone').classList.remove('wrong'),400);
     if(this.hp<=0)setTimeout(()=>this._lose(),300);
   },
 
   useItem(item){
-    if(!this.isPlaying)return;
-    SFX.init();SFX.item();
+    if(!this.isPlaying)return; SFX.init();SFX.item();
     if(item==='hint'&&this.hints>0){
       this.hints--;this.score=Math.max(0,this.score-50);this._updateHUD();
       const h=this.currentQ.ans.substring(0,Math.max(1,Math.ceil(this.currentQ.ans.length*.4)));
-      document.getElementById('hint-line').textContent=`💡 HINT: ${h}...`;
-      document.getElementById('ans-inp').value=h;document.getElementById('ans-inp').focus();
+      document.getElementById('hint-line').textContent=`💡 HINT: ${h}...`; document.getElementById('ans-inp').value=h;document.getElementById('ans-inp').focus();
       this._updatePups();
     }else if(item==='potion'&&this.potions>0&&this.hp<100){
-      this.potions--;this._updateHP(Math.min(100,this.hp+30));
-      toast('💊 HP RESTORED +30%','g');this._updatePups();
-      floatDmg('+30 HP','good');
+      this.potions--;this._updateHP(Math.min(100,this.hp+30)); toast('💊 HP RESTORED +30%','g');this._updatePups(); floatDmg('+30 HP','good');
     }else if(item==='skip'&&this.skips>0){
       this.skips--;this.score=Math.max(0,this.score-100);this.combo=0;
-      this._updateHUD();this._updatePups();this._nextQ();
-      document.getElementById('ans-inp').focus();
+      this._updateHUD();this._updatePups();this._nextQ(); document.getElementById('ans-inp').focus();
     }
   },
 
-  _win(){
-    this.isPlaying=false;clearInterval(this.timerInterval);SFX.win();
-    flash('#ffd700');
-    this.saveLB({name:this.playerName,score:this.score,mode:this.lastMode});
-    updateChampion();
-    this._showEnd(true);
+  async _win(){
+    this.isPlaying=false;clearInterval(this.timerInterval);SFX.win(); flash('#ffd700');
+    await this.saveLB({name:this.playerName,score:this.score,mode:this.lastMode});
+    updateChampion(); this._showEnd(true);
   },
-  _lose(){
-    this.isPlaying=false;clearInterval(this.timerInterval);SFX.lose();
-    flash('#ff2d5b');
-    this.saveLB({name:this.playerName,score:this.score,mode:this.lastMode});
-    updateChampion();
-    this._showEnd(false);
+  async _lose(){
+    this.isPlaying=false;clearInterval(this.timerInterval);SFX.lose(); flash('#ff2d5b');
+    await this.saveLB({name:this.playerName,score:this.score,mode:this.lastMode});
+    updateChampion(); this._showEnd(false);
   },
 
   playAgain(){
-    SFX.nav();
-    if(MP.active){showScene('s-lobby');}
-    else{G.startSolo(G.lastMode);}
+    SFX.nav(); if(MP.active){showScene('s-lobby');}else{G.startSolo(G.lastMode);}
   },
 
   _showEnd(won){
     document.getElementById('end-title').textContent=won?'✓ MISSION COMPLETE':'SESSION END';
     document.getElementById('end-title').className=won?'title win-text':'title danger-text';
     document.getElementById('end-title').dataset.t=won?'MISSION COMPLETE':'SESSION END';
-    document.getElementById('end-name').textContent=this.playerName;
-    document.getElementById('end-score').textContent=this.score.toLocaleString();
-    document.getElementById('end-mode').textContent=this.lastMode;
-    document.getElementById('end-multi-sb').style.display='none';
-    document.getElementById('end-review').style.display='block';
+    document.getElementById('end-name').textContent=this.playerName; document.getElementById('end-score').textContent=this.score.toLocaleString(); document.getElementById('end-mode').textContent=this.lastMode;
+    document.getElementById('end-multi-sb').style.display='none'; document.getElementById('end-review').style.display='block';
     const log=document.getElementById('review-log');log.innerHTML='';
     this.sessionHistory.forEach((q,i)=>{
       const d=document.createElement('div');d.className='ri';
-      d.innerHTML=`<div class="ri-num">Q${i+1} · LVL${q.level||1}</div><div class="ri-q">${q.text}</div><div class="ri-code">${q.code}</div><div class="ri-ans">▸ ANS: ${q.ans}</div><div class="ri-expl">💡 ${q.explanation}</div>`;
-      log.appendChild(d);
+      d.innerHTML=`<div class="ri-num">Q${i+1} · LVL${q.level||1}</div><div class="ri-q">${q.text}</div><div class="ri-code">${q.code}</div><div class="ri-ans">▸ ANS: ${q.ans}</div><div class="ri-expl">💡 ${q.explanation}</div>`; log.appendChild(d);
     });
     setTimeout(()=>showScene('s-end'),350);
   },
@@ -749,31 +643,22 @@ const G={
   _startTimer(){
     clearInterval(this.timerInterval);
     this.timerInterval=setInterval(()=>{
-      if(!this.isPlaying)return;
-      this.timer--;
+      if(!this.isPlaying)return; this.timer--;
       const tbox=document.getElementById('hud-timer').closest('.hbox-b');
-      if(this.timer<=10){
-        tbox.classList.add('danger');
-        if(!this.lowTimePlayed||this.timer%2===0){SFX.lowtime();this.lowTimePlayed=true;}
-      }else tbox.classList.remove('danger');
+      if(this.timer<=10){ tbox.classList.add('danger'); if(!this.lowTimePlayed||this.timer%2===0){SFX.lowtime();this.lowTimePlayed=true;} }else tbox.classList.remove('danger');
       document.getElementById('hud-timer').textContent=this.timer;
       if(this.timer<=0)this._lose();
     },1000);
   },
 
   _updateHUD(){
-    document.getElementById('hud-score').textContent=this.score.toLocaleString();
-    document.getElementById('hud-timer').textContent=this.timer;
-    const c=document.getElementById('hud-combo');
-    c.textContent=`×${this.combo}`;
-    c.style.color=this.combo>=5?'var(--p)':this.combo>=3?'var(--o)':'';
-    c.style.textShadow=this.combo>=5?'0 0 10px var(--p)':'';
+    document.getElementById('hud-score').textContent=this.score.toLocaleString(); document.getElementById('hud-timer').textContent=this.timer;
+    const c=document.getElementById('hud-combo'); c.textContent=`×${this.combo}`;
+    c.style.color=this.combo>=5?'var(--p)':this.combo>=3?'var(--o)':''; c.style.textShadow=this.combo>=5?'0 0 10px var(--p)':'';
     this._updateHP(this.hp);
   },
   _updateHP(v){
-    this.hp=v;
-    const fill=document.getElementById('hp-fill');
-    fill.style.width=`${v}%`;
+    this.hp=v; const fill=document.getElementById('hp-fill'); fill.style.width=`${v}%`;
     fill.style.background=v>60?'linear-gradient(90deg,var(--g),#00ff95)':v>30?'linear-gradient(90deg,var(--y),#ff9500)':'linear-gradient(90deg,var(--r),#ff6060)';
     document.getElementById('hp-pct').textContent=`${v}%`;
   },
@@ -782,14 +667,12 @@ const G={
     document.getElementById('btn-potion').innerHTML=`<span class="pi">💊</span>HP(${potions})`;
     document.getElementById('btn-hint').innerHTML=`<span class="pi">💡</span>HINT(${hints})`;
     document.getElementById('btn-skip').innerHTML=`<span class="pi">⏩</span>SKIP(${skips})`;
-    
     document.getElementById('btn-potion').disabled=!this.isPlaying||potions<=0;
     document.getElementById('btn-hint').disabled=!this.isPlaying||hints<=0;
     document.getElementById('btn-skip').disabled=!this.isPlaying||skips<=0;
   },
 };
 
-// WIN/LOSE text CSS inline
 const headStyle=document.createElement('style');
 headStyle.textContent=`
 .win-text{color:var(--gold)!important;text-shadow:var(--sy)!important;animation:wp .8s infinite;}
@@ -797,191 +680,89 @@ headStyle.textContent=`
 @keyframes wp{0%,100%{transform:scale(1);}50%{transform:scale(1.03);}}
 `;document.head.appendChild(headStyle);
 
-/* ═══════════════════════════════════════════════════════════
-   MULTIPLAYER ENGINE
-═══════════════════════════════════════════════════════════ */
 const MP={
-  socket:null,
-  active:false,
-  roomCode:null,
-  isHost:false,
-  myId:null,
-  myName:'',
-  isReady:false,
-  gameMode:null,
-  gameTimeLimit:60,
+  socket:null, active:false, roomCode:null, isHost:false, myId:null, myName:'', isReady:false, gameMode:null, gameTimeLimit:60,
 
   connect(){
-    if(this.socket&&this.socket.connected)return;
-    this.socket=io({transports:['websocket','polling']});
-    this.myId=null;
-    this._bindEvents();
+    if(this.socket&&this.socket.connected)return; this.socket=io({transports:['websocket','polling']}); this.myId=null; this._bindEvents();
   },
 
   _bindEvents(){
     const s=this.socket;
-    s.on('connect',()=>{
-      this.myId=s.id;
-      console.log('[CONNECTED]',s.id);
-    });
-    s.on('disconnect',()=>{
-      if(this.active){toast('การเชื่อมต่อขาด — กลับสู่เมนู','r');this._cleanup();showScene('s-menu');}
-    });
+    s.on('connect',()=>{ this.myId=s.id; console.log('[CONNECTED]',s.id); });
+    s.on('disconnect',()=>{ if(this.active){toast('การเชื่อมต่อขาด — กลับสู่เมนู','r');this._cleanup();showScene('s-menu');} });
     s.on('error_msg',msg=>toast(msg,'r'));
     s.on('room_created',data=>{
-      this.roomCode=data.roomCode;this.isHost=true;this.active=true;
-      this.gameMode=data.mode;this.gameTimeLimit=data.timeLimit;
-      document.getElementById('lobby-code').textContent=data.roomCode;
-      document.getElementById('lobby-mode').textContent=data.mode;
-      document.getElementById('lobby-time').textContent=data.timeLimit;
-      document.getElementById('start-btn').style.display='block';
-      document.getElementById('ready-btn').style.display='none';
+      this.roomCode=data.roomCode;this.isHost=true;this.active=true; this.gameMode=data.mode;this.gameTimeLimit=data.timeLimit;
+      document.getElementById('lobby-code').textContent=data.roomCode; document.getElementById('lobby-mode').textContent=data.mode; document.getElementById('lobby-time').textContent=data.timeLimit;
+      document.getElementById('start-btn').style.display='block'; document.getElementById('ready-btn').style.display='none';
       showScene('s-lobby');SFX.join();toast('ห้องสร้างแล้ว! แชร์รหัส','g');
     });
     s.on('room_joined',data=>{
-      this.roomCode=data.roomCode;this.isHost=false;this.active=true;
-      this.gameMode=data.mode;this.gameTimeLimit=data.timeLimit;
-      document.getElementById('lobby-code').textContent=data.roomCode;
-      document.getElementById('lobby-mode').textContent=data.mode;
-      document.getElementById('lobby-time').textContent=data.timeLimit;
-      document.getElementById('start-btn').style.display='none';
-      document.getElementById('ready-btn').style.display='block';
+      this.roomCode=data.roomCode;this.isHost=false;this.active=true; this.gameMode=data.mode;this.gameTimeLimit=data.timeLimit;
+      document.getElementById('lobby-code').textContent=data.roomCode; document.getElementById('lobby-mode').textContent=data.mode; document.getElementById('lobby-time').textContent=data.timeLimit;
+      document.getElementById('start-btn').style.display='none'; document.getElementById('ready-btn').style.display='block';
       showScene('s-lobby');SFX.join();toast('เข้าร่วมสำเร็จ!','b');
     });
-    s.on('you_are_host',()=>{
-      this.isHost=true;
-      document.getElementById('start-btn').style.display='block';
-      document.getElementById('ready-btn').style.display='none';
-      toast('คุณเป็น Host แล้ว','y');
-    });
+    s.on('you_are_host',()=>{ this.isHost=true; document.getElementById('start-btn').style.display='block'; document.getElementById('ready-btn').style.display='none'; toast('คุณเป็น Host แล้ว','y'); });
     s.on('room_update',data=>this._renderLobby(data));
-    s.on('chat_msg',data=>{
-      addChat(document.getElementById('lobby-chat'),data);
-      if(this.active&&document.getElementById('s-game').classList.contains('on')){
-        // ignore in-game for now
-      }
-    });
+    s.on('chat_msg',data=>{ addChat(document.getElementById('lobby-chat'),data); });
     s.on('game_started',data=>{
-      SFX.nav();
-      G.playerName=this.myName;
-      G.lastMode=data.mode;
+      SFX.nav(); G.playerName=this.myName; G.lastMode=data.mode;
       G.score=0;G.hp=100;G.combo=0;G.timer=data.timeLimit;G.isPlaying=true;
-      G.hints=data.defaultItems;G.potions=data.defaultItems;G.skips=data.defaultItems;
-      G.lowTimePlayed=false;
-
-      const mon=document.getElementById('monster');
-      mon.classList.toggle('boss',data.mode==='SURVIVAL');
-      G._clearBossRings();
-      if(data.mode==='SURVIVAL')G._addBossRings();
-
-      document.getElementById('hud-name').textContent=this.myName;
-      document.getElementById('live-sb').style.display='block';
-      G._updateHUD();G._updatePups();
-      document.getElementById('hint-line').textContent='';
-      document.getElementById('izone').className='izone';
-
-      // Set first question
+      G.hints=data.defaultItems;G.potions=data.defaultItems;G.skips=data.defaultItems; G.lowTimePlayed=false;
+      const mon=document.getElementById('monster'); mon.classList.toggle('boss',data.mode==='SURVIVAL');
+      G._clearBossRings(); if(data.mode==='SURVIVAL')G._addBossRings();
+      document.getElementById('hud-name').textContent=this.myName; document.getElementById('live-sb').style.display='block';
+      G._updateHUD();G._updatePups(); document.getElementById('hint-line').textContent=''; document.getElementById('izone').className='izone';
       if(data.question)this._setQuestion(data.question);
-      G.sessionHistory=[];
-      showScene('s-game');
-      document.getElementById('ans-inp').focus();
-      toast('GAME START!','g');flash('#00ff41');
+      G.sessionHistory=[]; showScene('s-game'); document.getElementById('ans-inp').focus(); toast('GAME START!','g');flash('#00ff41');
     });
     s.on('timer_tick',({time})=>{
-      G.timer=time;
-      const tbox=document.getElementById('hud-timer').closest('.hbox-b');
-      if(time<=10){
-        tbox.classList.add('danger');
-        if(!G.lowTimePlayed||time%2===0){SFX.lowtime();G.lowTimePlayed=true;}
-      }else tbox.classList.remove('danger');
+      G.timer=time; const tbox=document.getElementById('hud-timer').closest('.hbox-b');
+      if(time<=10){ tbox.classList.add('danger'); if(!G.lowTimePlayed||time%2===0){SFX.lowtime();G.lowTimePlayed=true;} }else tbox.classList.remove('danger');
       document.getElementById('hud-timer').textContent=time;
     });
     s.on('answer_result',data=>{
       if(data.correct){
-        G.score=data.score;G.combo=data.combo;
-        SFX.correct();
+        G.score=data.score;G.combo=data.combo; SFX.correct();
         if(data.combo%3===0&&data.combo>0){SFX.combo();SFX.bonus();toast('⏱ COMBO BONUS!','y');}
-        const bonus=data.earned-150;
-        if(bonus>0)floatDmg(`+${data.earned} ×${data.combo}!`,'combo');
-        else floatDmg(`+${data.earned}`,'good');
+        const bonus=data.earned-150; if(bonus>0)floatDmg(`+${data.earned} ×${data.combo}!`,'combo'); else floatDmg(`+${data.earned}`,'good');
         burstEl(document.getElementById('monster'),this.gameMode==='SURVIVAL'?'#ff2d5b':'#00ff41',12);
-        const mon=document.getElementById('monster');
-        mon.classList.add('hit');setTimeout(()=>mon.classList.remove('hit'),180);
-        document.getElementById('izone').classList.add('ok');
-        if(data.nextQuestion)this._setQuestion(data.nextQuestion);
-        G._updateHUD();
+        const mon=document.getElementById('monster'); mon.classList.add('hit');setTimeout(()=>mon.classList.remove('hit'),180);
+        document.getElementById('izone').classList.add('ok'); if(data.nextQuestion)this._setQuestion(data.nextQuestion); G._updateHUD();
         setTimeout(()=>{document.getElementById('izone').classList.remove('ok');document.getElementById('ans-inp').value='';document.getElementById('ans-inp').focus();},300);
       }else{
-        G.hp=data.hp;G.combo=0;SFX.wrong();
-        floatDmg('WRONG!','bad');flash('#ff2d5b');
-        document.getElementById('izone').classList.add('wrong');
-        document.getElementById('ans-inp').value='';
-        G._updateHUD();
+        G.hp=data.hp;G.combo=0;SFX.wrong(); floatDmg('WRONG!','bad');flash('#ff2d5b');
+        document.getElementById('izone').classList.add('wrong'); document.getElementById('ans-inp').value=''; G._updateHUD();
         setTimeout(()=>document.getElementById('izone').classList.remove('wrong'),400);
       }
     });
     s.on('item_used',data=>{
-      if(data.item==='hint'){
-        G.hints=data.hints;G.score=data.score;G._updateHUD();G._updatePups();
-        document.getElementById('hint-line').textContent=`💡 HINT: ${data.hint}...`;
-        document.getElementById('ans-inp').value=data.hint;document.getElementById('ans-inp').focus();
-      }else if(data.item==='potion'){
-        G.potions=data.potions;G._updateHP(data.hp);G._updatePups();
-        floatDmg('+30 HP','good');toast('💊 HP RESTORED','g');
-      }else if(data.item==='skip'){
-        G.skips=data.skips;G.score=data.score;G.combo=0;
-        G._updateHUD();G._updatePups();
-        if(data.nextQuestion)this._setQuestion(data.nextQuestion);
-        document.getElementById('ans-inp').value='';document.getElementById('ans-inp').focus();
-      }
+      if(data.item==='hint'){ G.hints=data.hints;G.score=data.score;G._updateHUD();G._updatePups(); document.getElementById('hint-line').textContent=`💡 HINT: ${data.hint}...`; document.getElementById('ans-inp').value=data.hint;document.getElementById('ans-inp').focus(); }
+      else if(data.item==='potion'){ G.potions=data.potions;G._updateHP(data.hp);G._updatePups(); floatDmg('+30 HP','good');toast('💊 HP RESTORED','g'); }
+      else if(data.item==='skip'){ G.skips=data.skips;G.score=data.score;G.combo=0; G._updateHUD();G._updatePups(); if(data.nextQuestion)this._setQuestion(data.nextQuestion); document.getElementById('ans-inp').value='';document.getElementById('ans-inp').focus(); }
     });
-    s.on('player_won',data=>{
-      G.isPlaying=false;SFX.win();flash('#ffd700');
-      toast(`🏆 YOU WIN! Score: ${data.score.toLocaleString()}`,'y');
-    });
-    s.on('player_eliminated',data=>{
-      G.isPlaying=false;SFX.lose();flash('#ff2d5b');
-      toast('💀 ELIMINATED!','r');
-    });
+    s.on('player_won',data=>{ G.isPlaying=false;SFX.win();flash('#ffd700'); toast(`🏆 YOU WIN! Score: ${data.score.toLocaleString()}`,'y'); });
+    s.on('player_eliminated',data=>{ G.isPlaying=false;SFX.lose();flash('#ff2d5b'); toast('💀 ELIMINATED!','r'); });
     s.on('score_update',sb=>this._renderLiveSB(sb));
-    s.on('game_ended',data=>{
-      G.isPlaying=false;clearInterval(G.timerInterval);
-      this._showMultiEnd(data.scoreboard);
-    });
+    s.on('game_ended',data=>{ G.isPlaying=false;clearInterval(G.timerInterval); this._showMultiEnd(data.scoreboard); });
   },
 
   _setQuestion(q){
-    if(!q)return;
-    G.currentQ=q;
-    document.getElementById('q-txt').textContent=q.text;
-    document.getElementById('q-mode').textContent=q.mode||this.gameMode;
-    const lvlCols=['','#00ff41','#00e5ff','#ffe500','#ff7b00','#c850ff','#ff2d5b','#ff2d5b'];
-    const lv=q.level||1;
-    const lel=document.getElementById('q-lvl');
-    lel.textContent=`LVL ${lv}`;lel.style.color=lvlCols[lv]||'#00ff41';
-    G._typeCode(q.code);
-    document.getElementById('hint-line').textContent='';
-    document.getElementById('izone').className='izone';
+    if(!q)return; G.currentQ=q; document.getElementById('q-txt').textContent=q.text; document.getElementById('q-mode').textContent=q.mode||this.gameMode;
+    const lvlCols=['','#00ff41','#00e5ff','#ffe500','#ff7b00','#c850ff','#ff2d5b','#ff2d5b']; const lv=q.level||1; const lel=document.getElementById('q-lvl');
+    lel.textContent=`LVL ${lv}`;lel.style.color=lvlCols[lv]||'#00ff41'; G._typeCode(q.code); document.getElementById('hint-line').textContent=''; document.getElementById('izone').className='izone';
     if(!G.sessionHistory.find(x=>x.id===q.id))G.sessionHistory.push(q);
   },
 
   _renderLobby(data){
-    const cnt=document.getElementById('lobby-count');
-    const pl=document.getElementById('lobby-players');
-    cnt.textContent=`${data.players.length}/8 players`;
-    pl.innerHTML='';
+    const cnt=document.getElementById('lobby-count'); const pl=document.getElementById('lobby-players');
+    cnt.textContent=`${data.players.length}/8 players`; pl.innerHTML='';
     data.players.forEach(p=>{
-      const isMe=p.socketId===this.myId;
-      const isH=p.socketId===data.hostId;
+      const isMe=p.socketId===this.myId; const isH=p.socketId===data.hostId;
       const d=document.createElement('div');d.className='lp-item';
-      d.innerHTML=`
-        <span>
-          <span class="lp-name">${p.name}</span>
-          ${isMe?'<span class="lp-you">[YOU]</span>':''}
-          ${isH?'<span class="lp-host">👑HOST</span>':''}
-        </span>
-        <span class="lp-ready ${isH||p.ready?'yes':'no'}">${isH?'HOST':p.ready?'✓ READY':'WAITING'}</span>
-      `;
+      d.innerHTML=`<span><span class="lp-name">${p.name}</span>${isMe?'<span class="lp-you">[YOU]</span>':''}${isH?'<span class="lp-host">👑HOST</span>':''}</span><span class="lp-ready ${isH||p.ready?'yes':'no'}">${isH?'HOST':p.ready?'✓ READY':'WAITING'}</span>`;
       pl.appendChild(d);
     });
   },
@@ -989,94 +770,60 @@ const MP={
   _renderLiveSB(sb){
     const el=document.getElementById('live-sb');el.innerHTML='';
     sb.slice(0,4).forEach((p,i)=>{
-      const isMe=p.socketId===this.myId;
-      const d=document.createElement('div');
-      d.className=`lsb-row${isMe?' me':''}`;
-      d.innerHTML=`<span class="lsb-rank">${i+1}</span><span class="lsb-name">${p.name}</span><span class="lsb-score">${p.score.toLocaleString()}</span><span class="lsb-hp">${p.hp}%</span>${p.done?'<span class="lsb-done">DONE</span>':''}`;
-      el.appendChild(d);
+      const isMe=p.socketId===this.myId; const d=document.createElement('div'); d.className=`lsb-row${isMe?' me':''}`;
+      d.innerHTML=`<span class="lsb-rank">${i+1}</span><span class="lsb-name">${p.name}</span><span class="lsb-score">${p.score.toLocaleString()}</span><span class="lsb-hp">${p.hp}%</span>${p.done?'<span class="lsb-done">DONE</span>':''}`; el.appendChild(d);
     });
   },
 
-  _showMultiEnd(sb){
-    document.getElementById('end-title').textContent='FINAL RESULTS';
-    document.getElementById('end-title').className='title win-text';
+  async _showMultiEnd(sb){
+    document.getElementById('end-title').textContent='FINAL RESULTS'; document.getElementById('end-title').className='title win-text';
     const me=sb.find(p=>p.socketId===this.myId)||{name:this.myName,score:G.score};
-    document.getElementById('end-name').textContent=me.name;
-    document.getElementById('end-score').textContent=me.score.toLocaleString();
-    document.getElementById('end-mode').textContent=this.gameMode;
-    document.getElementById('end-review').style.display='none';
-    document.getElementById('end-multi-sb').style.display='block';
-    const list=document.getElementById('end-sb-list');list.innerHTML='';
-    const icons=['🥇','🥈','🥉'];
+    document.getElementById('end-name').textContent=me.name; document.getElementById('end-score').textContent=me.score.toLocaleString(); document.getElementById('end-mode').textContent=this.gameMode;
+    document.getElementById('end-review').style.display='none'; document.getElementById('end-multi-sb').style.display='block';
+    
+    // บันทึกคะแนนผู้เล่นตอนจบ Multi ลง DB ด้วย
+    await G.saveLB({name: this.myName, score: G.score, mode: this.gameMode});
+
+    const list=document.getElementById('end-sb-list');list.innerHTML=''; const icons=['🥇','🥈','🥉'];
     sb.forEach((p,i)=>{
-      const isMe=p.socketId===this.myId;
-      const d=document.createElement('div');
-      d.className=`esb-row${isMe?' me':''}`;
-      const rc=i===0?'r1':i===1?'r2':i===2?'r3':'';
-      d.innerHTML=`<div class="esb-rank ${rc}">${icons[i]||i+1}</div><div class="esb-name">${p.name}${isMe?' <span style="color:var(--g);font-size:.6rem;">[YOU]</span>':''}</div><div class="esb-score">${p.score.toLocaleString()}</div><div class="esb-badge">${p.done?'DONE':''}</div>`;
-      list.appendChild(d);
+      const isMe=p.socketId===this.myId; const d=document.createElement('div'); d.className=`esb-row${isMe?' me':''}`; const rc=i===0?'r1':i===1?'r2':i===2?'r3':'';
+      d.innerHTML=`<div class="esb-rank ${rc}">${icons[i]||i+1}</div><div class="esb-name">${p.name}${isMe?' <span style="color:var(--g);font-size:.6rem;">[YOU]</span>':''}</div><div class="esb-score">${p.score.toLocaleString()}</div><div class="esb-badge">${p.done?'DONE':''}</div>`; list.appendChild(d);
     });
-    SFX.win();flash('#ffd700');
-    setTimeout(()=>showScene('s-end'),400);
+    SFX.win();flash('#ffd700'); setTimeout(()=>showScene('s-end'),400); updateChampion();
   },
 
   submit(){
-    if(!this.socket||!G.currentQ)return;
-    const ans=document.getElementById('ans-inp').value.trim();
-    if(!ans)return;
-    SFX.init();
-    this.socket.emit('submit_answer',{answer:ans});
+    if(!this.socket||!G.currentQ)return; const ans=document.getElementById('ans-inp').value.trim(); if(!ans)return;
+    SFX.init(); this.socket.emit('submit_answer',{answer:ans});
   },
 
   useItem(item){
-    if(!this.socket)return;
-    SFX.init();SFX.item();
-    this.socket.emit('use_item',{item});
+    if(!this.socket)return; SFX.init();SFX.item(); this.socket.emit('use_item',{item});
   },
 
-  _cleanup(){
-    this.active=false;this.roomCode=null;this.isHost=false;this.isReady=false;
-  },
+  _cleanup(){ this.active=false;this.roomCode=null;this.isHost=false;this.isReady=false; },
 };
 
-/* ─── MULTIPLAYER UI ACTIONS ────────────────────────────── */
 function showJoinPanel(){
-  SFX.click();
-  const jp=document.getElementById('join-panel');
-  jp.style.display=jp.style.display==='none'?'block':'none';
-  if(jp.style.display==='block')document.getElementById('room-code-inp').focus();
+  SFX.click(); const jp=document.getElementById('join-panel'); jp.style.display=jp.style.display==='none'?'block':'none'; if(jp.style.display==='block')document.getElementById('room-code-inp').focus();
 }
 
 function createRoom(){
-  SFX.nav();
-  const n=document.getElementById('name-multi').value.trim();
+  SFX.nav(); const n=document.getElementById('name-multi').value.trim();
   if(!n){toast('ใส่ชื่อก่อน!','r');document.getElementById('name-multi').focus();return;}
-  MP.myName=n.toUpperCase().slice(0,12);
-  MP.connect();
-  const t=getSelectedTime();
-  _showModePickerForMP((mode)=>{
-    MP.socket.emit('create_room',{playerName:MP.myName,mode,timeLimit:t});
-  });
+  MP.myName=n.toUpperCase().slice(0,12); MP.connect(); const t=getSelectedTime();
+  _showModePickerForMP((mode)=>{ MP.socket.emit('create_room',{playerName:MP.myName,mode,timeLimit:t}); });
 }
 
 function joinRoom(){
-  SFX.nav();
-  const n=document.getElementById('name-multi').value.trim();
-  const code=document.getElementById('room-code-inp').value.trim().toUpperCase();
-  if(!n){toast('ใส่ชื่อก่อน!','r');return;}
-  if(code.length!==5){toast('รหัสต้อง 5 ตัว!','r');return;}
-  MP.myName=n.toUpperCase().slice(0,12);
-  MP.connect();
-  setTimeout(()=>{
-    MP.socket.emit('join_room',{playerName:MP.myName,roomCode:code});
-  },300);
+  SFX.nav(); const n=document.getElementById('name-multi').value.trim(); const code=document.getElementById('room-code-inp').value.trim().toUpperCase();
+  if(!n){toast('ใส่ชื่อก่อน!','r');return;} if(code.length!==5){toast('รหัสต้อง 5 ตัว!','r');return;}
+  MP.myName=n.toUpperCase().slice(0,12); MP.connect(); setTimeout(()=>{ MP.socket.emit('join_room',{playerName:MP.myName,roomCode:code}); },300);
 }
 
 function _showModePickerForMP(cb){
-  const ol=document.createElement('div');
-  ol.style.cssText=`position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.85);display:flex;justify-content:center;align-items:center;padding:20px;`;
-  const box=document.createElement('div');
-  box.style.cssText=`background:var(--glass);border:1px solid var(--g);padding:20px;max-width:460px;width:100%;`;
+  const ol=document.createElement('div'); ol.style.cssText=`position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.85);display:flex;justify-content:center;align-items:center;padding:20px;`;
+  const box=document.createElement('div'); box.style.cssText=`background:var(--glass);border:1px solid var(--g);padding:20px;max-width:460px;width:100%;`;
   box.innerHTML=`
     <div style="font-family:var(--font1);font-size:.85rem;color:var(--g);letter-spacing:3px;margin-bottom:14px;text-align:center;">SELECT MODE FOR ROOM</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
@@ -1087,89 +834,35 @@ function _showModePickerForMP(cb){
       `).join('')}
     </div>
     <div style="display:flex;gap:8px;">
-      <button onclick="const m=this.closest('.mpp').dataset.mode||'BASICS';document.body.removeChild(this.closest('.mpp-ov'));cb(m);" 
-        style="flex:1;background:rgba(0,255,65,.1);border:1px solid var(--g);color:var(--g);padding:11px;font-family:var(--font1);font-size:.78rem;letter-spacing:2px;cursor:pointer;">✓ CREATE ROOM</button>
-      <button onclick="document.body.removeChild(this.closest('.mpp-ov'));"
-        style="background:transparent;border:1px solid var(--border);color:var(--dim);padding:11px 16px;font-family:var(--font2);font-size:.75rem;cursor:pointer;">✕</button>
+      <button onclick="const m=this.closest('.mpp').dataset.mode||'BASICS';document.body.removeChild(this.closest('.mpp-ov'));cb(m);" style="flex:1;background:rgba(0,255,65,.1);border:1px solid var(--g);color:var(--g);padding:11px;font-family:var(--font1);font-size:.78rem;letter-spacing:2px;cursor:pointer;">✓ CREATE ROOM</button>
+      <button onclick="document.body.removeChild(this.closest('.mpp-ov'));" style="background:transparent;border:1px solid var(--border);color:var(--dim);padding:11px 16px;font-family:var(--font2);font-size:.75rem;cursor:pointer;">✕</button>
     </div>
   `;
-  box.className='mpp';box.dataset.mode='BASICS';
-  ol.className='mpp-ov';ol.appendChild(box);
-  document.body.appendChild(ol);
-  ol.addEventListener('click',e=>{if(e.target===ol)document.body.removeChild(ol);});
-  window.__mpCb=cb;
-  box.querySelectorAll('button').forEach(btn=>{
-    const orig=btn.getAttribute('onclick');
-    if(orig&&orig.includes('cb(m)'))btn.setAttribute('onclick',orig.replace('cb(m)','window.__mpCb(m)'));
-  });
+  box.className='mpp';box.dataset.mode='BASICS'; ol.className='mpp-ov';ol.appendChild(box); document.body.appendChild(ol);
+  ol.addEventListener('click',e=>{if(e.target===ol)document.body.removeChild(ol);}); window.__mpCb=cb;
+  box.querySelectorAll('button').forEach(btn=>{ const orig=btn.getAttribute('onclick'); if(orig&&orig.includes('cb(m)'))btn.setAttribute('onclick',orig.replace('cb(m)','window.__mpCb(m)')); });
 }
 
 function toggleReady(){
-  SFX.click();
-  if(!MP.socket)return;
-  MP.isReady=!MP.isReady;
-  const btn=document.getElementById('ready-btn');
-  btn.textContent=MP.isReady?'[ ✓ READY! ]':'[ READY ]';
-  btn.style.borderColor=MP.isReady?'var(--g)':'';
-  btn.style.color=MP.isReady?'var(--g)':'';
-  if(MP.isReady)btn.style.boxShadow='var(--sg)';else btn.style.boxShadow='';
-  MP.socket.emit('player_ready');
+  SFX.click(); if(!MP.socket)return; MP.isReady=!MP.isReady; const btn=document.getElementById('ready-btn');
+  btn.textContent=MP.isReady?'[ ✓ READY! ]':'[ READY ]'; btn.style.borderColor=MP.isReady?'var(--g)':''; btn.style.color=MP.isReady?'var(--g)':'';
+  if(MP.isReady)btn.style.boxShadow='var(--sg)';else btn.style.boxShadow=''; MP.socket.emit('player_ready');
 }
 
-function startGame(){
-  SFX.nav();
-  if(!MP.socket||!MP.isHost)return;
-  MP.socket.emit('start_game');
-}
-
-function leaveRoom(){
-  SFX.click();
-  if(MP.socket)MP.socket.disconnect();
-  MP._cleanup();
-  showScene('s-menu');
-}
-
-function copyCode(){
-  const code=document.getElementById('lobby-code').textContent;
-  navigator.clipboard?.writeText(code).then(()=>toast('คัดลอกรหัสแล้ว! '+code,'g')).catch(()=>toast(code,'b'));
-}
-
-function sendChat(ctx){
-  SFX.click();
-  const inp=document.getElementById(`chat-inp-${ctx}`);
-  const msg=inp.value.trim();
-  if(!msg||!MP.socket)return;
-  MP.socket.emit('send_chat',{text:msg});
-  inp.value='';
-}
+function startGame(){ SFX.nav(); if(!MP.socket||!MP.isHost)return; MP.socket.emit('start_game'); }
+function leaveRoom(){ SFX.click(); if(MP.socket)MP.socket.disconnect(); MP._cleanup(); showScene('s-menu'); }
+function copyCode(){ const code=document.getElementById('lobby-code').textContent; navigator.clipboard?.writeText(code).then(()=>toast('คัดลอกรหัสแล้ว! '+code,'g')).catch(()=>toast(code,'b')); }
+function sendChat(ctx){ SFX.click(); const inp=document.getElementById(`chat-inp-${ctx}`); const msg=inp.value.trim(); if(!msg||!MP.socket)return; MP.socket.emit('send_chat',{text:msg}); inp.value=''; }
 document.getElementById('chat-inp-lobby').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat('lobby');});
 
-/* ─── แก้ไข: เพิ่มการกดปุ่ม Enter ให้พิมพ์ตอบได้ทันที ──────────────────────────── */
-document.getElementById('ans-inp').addEventListener('keydown',e=>{
-  if(e.key==='Enter'){
-    // เลือกว่าจะส่งคำตอบแบบเล่นคนเดียวหรือเล่นหลายคน
-    if(MP.active&&G.isPlaying) MP.submit();
-    else G.submit();
-  }
-});
+document.getElementById('ans-inp').addEventListener('keydown',e=>{ if(e.key==='Enter'){ if(MP.active&&G.isPlaying) MP.submit(); else G.submit(); } });
+document.querySelector('.fire-btn').addEventListener('click',()=>{ if(MP.active&&G.isPlaying) MP.submit(); else G.submit(); });
 
-/* ─── เพิ่มการคลิกปุ่ม FIRE ให้ตอบได้ ──────────────────────────── */
-document.querySelector('.fire-btn').addEventListener('click',()=>{
-  if(MP.active&&G.isPlaying) MP.submit();
-  else G.submit();
-});
-
-// Override useItem for multiplayer
 const origUseItem=G.useItem.bind(G);
-G.useItem=function(item){
-  if(MP.active&&G.isPlaying)MP.useItem(item);
-  else origUseItem(item);
-};
+G.useItem=function(item){ if(MP.active&&G.isPlaying)MP.useItem(item); else origUseItem(item); };
 
-/* ─── INIT ──────────────────────────────────────────────── */
 updateChampion();
 
-/* ─── SOLO QUESTIONS (client-side for solo mode) ─────────── */
 const SOLO_QUESTIONS=[
   {id:101,mode:'BASICS',level:1,text:"คำสั่งแสดงผลออกหน้าจอ",code:"____('Hello World')",ans:"print",explanation:"print() ใช้แสดงผล"},
   {id:102,mode:'BASICS',level:1,text:"รับค่าจากผู้ใช้",code:"name = ____('Enter: ')",ans:"input",explanation:"input() รับค่าจากผู้ใช้"},
@@ -1254,8 +947,6 @@ const SOLO_QUESTIONS=[
   {id:606,mode:'OOP',level:5,text:"เรียก parent constructor",code:"____().__init__(name)",ans:"super",explanation:"super() เรียกคลาสแม่"},
   {id:607,mode:'OOP',level:5,text:"__str__ method",code:"def ____(self):",ans:"__str__",explanation:"__str__ แสดงข้อความ"},
   {id:608,mode:'OOP',level:5,text:"property decorator",code:"@____",ans:"property",explanation:"@property เรียกเหมือน attribute"},
-  
-  // DATABASE Level 6 (NEW)
   { id:801, mode:'DATABASE', level:6, text:"เชื่อมต่อฐานข้อมูล SQLite", code:"sqlite3.____('data.db')", ans:"connect", explanation:"connect() ใช้เชื่อมต่อฐานข้อมูล" },
   { id:802, mode:'DATABASE', level:6, text:"สร้าง Cursor", code:"c = conn.____()", ans:"cursor", explanation:"cursor() เป็นตัวจัดการคำสั่ง SQL" },
   { id:803, mode:'DATABASE', level:6, text:"รันคำสั่ง SQL", code:"c.____('SELECT * FROM users')", ans:"execute", explanation:"execute() สั่งรัน SQL" },
@@ -1263,16 +954,12 @@ const SOLO_QUESTIONS=[
   { id:805, mode:'DATABASE', level:6, text:"ดึงข้อมูลทั้งหมด", code:"rows = c.____()", ans:"fetchall", explanation:"fetchall() ดึงทุกแถวเป็น List" },
   { id:806, mode:'DATABASE', level:6, text:"ดึงข้อมูล 1 แถว", code:"row = c.____()", ans:"fetchone", explanation:"fetchone() ดึงข้อมูลแค่แถวเดียว" },
   { id:807, mode:'DATABASE', level:6, text:"ปิดการเชื่อมต่อ", code:"conn.____()", ans:"close", explanation:"close() ปิดฐานข้อมูล" },
-
-  // FILE I/O Level 6 (NEW)
   { id:901, mode:'FILE', level:6, text:"เปิดไฟล์โหมดอ่าน", code:"f = ____('data.txt', 'r')", ans:"open", explanation:"open() ใช้เปิดไฟล์" },
   { id:902, mode:'FILE', level:6, text:"อ่านไฟล์ทั้งหมด", code:"txt = f.____()", ans:"read", explanation:"read() อ่านเนื้อหาทั้งหมด" },
   { id:903, mode:'FILE', level:6, text:"อ่านไฟล์ทีละบรรทัด", code:"line = f.____()", ans:"readline", explanation:"readline() อ่าน 1 บรรทัด" },
   { id:904, mode:'FILE', level:6, text:"เขียนข้อมูลลงไฟล์", code:"f.____('Hello')", ans:"write", explanation:"write() เขียนข้อความลงไฟล์" },
   { id:905, mode:'FILE', level:6, text:"ปิดไฟล์", code:"f.____()", ans:"close", explanation:"close() คืนหน่วยความจำ" },
   { id:906, mode:'FILE', level:6, text:"เปิดไฟล์ด้วย Context", code:"____ open('f.txt') as f:", ans:"with", explanation:"with จะจัดการปิดไฟล์ให้อัตโนมัติ" },
-
-  // Advanced Level 7 (SURVIVAL)
   {id:701,mode:'LOGIC',level:7,text:"AND เงื่อนไขสองข้อ",code:"if x%2==0 ____ x>10:",ans:"and",explanation:"and เชื่อม 2 เงื่อนไข"},
   {id:702,mode:'LOGIC',level:7,text:"ตรวจสอบว่าไม่ว่างเปล่า",code:"if ____ name:",ans:"not",explanation:"not กลับค่า"},
   {id:703,mode:'LOOPS',level:7,text:"ลูปถอยหลังทีละ 2",code:"range(10,0,____)",ans:"-2",explanation:"step=-2"},
