@@ -613,12 +613,21 @@ const G={
     SFX.nav(); if(MP.active){showScene('s-lobby');}else{G.startSolo(G.lastMode);}
   },
 
+  // -------------------------------------------------------------
+  // แก้ไข 1: ข้อความจบเกมสำหรับ Solo ให้เงากับตัวหนังสือตรงกัน
+  // -------------------------------------------------------------
   _showEnd(won){
-    document.getElementById('end-title').textContent=won?'✓ MISSION COMPLETE':'SESSION END';
-    document.getElementById('end-title').className=won?'title win-text':'title danger-text';
-    document.getElementById('end-title').dataset.t=won?'MISSION COMPLETE':'SESSION END';
-    document.getElementById('end-name').textContent=this.playerName; document.getElementById('end-score').textContent=this.score.toLocaleString(); document.getElementById('end-mode').textContent=this.lastMode;
-    document.getElementById('end-multi-sb').style.display='none'; document.getElementById('end-review').style.display='block';
+    const txt = won ? 'MISSION COMPLETE' : 'SESSION END';
+    document.getElementById('end-title').textContent = txt;
+    document.getElementById('end-title').className = won ? 'title win-text' : 'title danger-text';
+    document.getElementById('end-title').dataset.t = txt;
+    
+    document.getElementById('end-name').textContent=this.playerName; 
+    document.getElementById('end-score').textContent=this.score.toLocaleString(); 
+    document.getElementById('end-mode').textContent=this.lastMode;
+    document.getElementById('end-multi-sb').style.display='none'; 
+    document.getElementById('end-review').style.display='block';
+    
     const log=document.getElementById('review-log');log.innerHTML='';
     this.sessionHistory.forEach((q,i)=>{
       const d=document.createElement('div');d.className='ri';
@@ -762,11 +771,20 @@ const MP={
     });
   },
 
+  // -------------------------------------------------------------
+  // แก้ไข 2: ข้อความจบเกมหลายคน ให้เงากับตัวหนังสือตรงกัน
+  // -------------------------------------------------------------
   _showMultiEnd(sb){
-    document.getElementById('end-title').textContent='FINAL RESULTS'; document.getElementById('end-title').className='title win-text';
+    document.getElementById('end-title').textContent='FINAL RESULTS'; 
+    document.getElementById('end-title').className='title win-text';
+    document.getElementById('end-title').dataset.t='FINAL RESULTS'; // เพิ่มบรรทัดนี้
+
     const me=sb.find(p=>p.socketId===this.myId)||{name:this.myName,score:G.score};
-    document.getElementById('end-name').textContent=me.name; document.getElementById('end-score').textContent=me.score.toLocaleString(); document.getElementById('end-mode').textContent=this.gameMode;
-    document.getElementById('end-review').style.display='none'; document.getElementById('end-multi-sb').style.display='block';
+    document.getElementById('end-name').textContent=me.name; 
+    document.getElementById('end-score').textContent=me.score.toLocaleString(); 
+    document.getElementById('end-mode').textContent=this.gameMode;
+    document.getElementById('end-review').style.display='none'; 
+    document.getElementById('end-multi-sb').style.display='block';
     
     const list=document.getElementById('end-sb-list');list.innerHTML=''; const icons=['🥇','🥈','🥉'];
     sb.forEach((p,i)=>{
