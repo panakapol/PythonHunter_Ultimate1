@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css"> 
 <style>
-  /* เพิ่มเติม: ทำให้คำถามยาวๆ ที่มี \n ขึ้นบรรทัดใหม่ได้อย่างสวยงาม */
+  /* ทำให้คำถามยาวๆ ขึ้นบรรทัดใหม่ได้อย่างสวยงาม */
   .q-txt { white-space: pre-wrap; line-height: 1.6; padding-bottom: 5px; }
   .code-line { white-space: pre-wrap; }
 </style>
@@ -94,6 +94,8 @@
     <button class="mbtn" data-mode="DATA"><span class="mico">04</span><div class="minfo"><h3>DATA</h3><small>List · Dict · Set</small></div></button>
     <button class="mbtn" data-mode="FUNC"><span class="mico">05</span><div class="minfo"><h3>FUNC</h3><small>Def · Return · Lambda</small></div></button>
     <button class="mbtn" data-mode="OOP"><span class="mico">06</span><div class="minfo"><h3>OOP</h3><small>Class · Init · Self</small></div></button>
+    <button class="mbtn" data-mode="DATABASE"><span class="mico">07</span><div class="minfo"><h3>DATABASE</h3><small>Connect · Cursor · SQL</small></div></button>
+    <button class="mbtn" data-mode="FILE"><span class="mico">08</span><div class="minfo"><h3>FILE I/O</h3><small>Open · Read · Write</small></div></button>
   </div>
 
   <button class="btn btn-lg btn-red" data-mode="SURVIVAL" style="margin-top:4px;width:100%;">☠ SURVIVAL MODE — HARDCORE ONLY</button>
@@ -255,8 +257,8 @@
         <li>▸ <strong>เป้าหมาย:</strong> พิมพ์เติมโค้ด Python ให้ถูกต้องเพื่อโจมตี Bug Monster</li>
         <li>▸ <strong>คะแนน:</strong> ตอบถูกรับ <span style="color:var(--g);">+150 คะแนน</span>/ข้อ</li>
         <li>▸ <strong>TIME BONUS:</strong> ตอบถูกต่อเนื่อง 3 ข้อ → <span style="color:var(--y);">+10 วินาที</span></li>
+        <li>▸ <strong>เงื่อนไขการชนะ (WIN):</strong> 60s = 800 | 120s = 1,500 | 180s = 2,000 คะแนน</li>
         <li>▸ <strong>ไอเทมตัวช่วย:</strong> 💊 HP+30% | 💡 HINT ใบ้ตัวแรก -50pts | ⏩ SKIP ข้ามข้อ -100pts</li>
-        <li>▸ <strong>โหมดออนไลน์:</strong> เกมจะสิ้นสุดลงก็ต่อเมื่อ "เวลาหมด" เท่านั้น (เล่นกันให้ทะลุลิมิต!)</li>
         <li>▸ <strong>Survival Mode:</strong> โหมดโหดหิน สุ่มเฉพาะโจทย์ระดับ <span style="color:var(--r);">ข้อยากพิเศษ</span> (Level 6-7) เท่านั้น</li>
       </ul>
     </div>
@@ -337,8 +339,17 @@
       </ul>
     </div>
 
+    <div style="margin-bottom:20px;border-bottom:1px dashed rgba(0,255,65,.1);padding-bottom:18px;">
+      <h3 style="font-family:var(--font1);font-size:.85rem;color:var(--y);letter-spacing:3px;margin-bottom:10px;padding-left:12px;border-left:3px solid var(--g);">7. DATABASE & FILE I/O</h3>
+      <ul style="list-style:none;font-family:var(--font2);font-size:.78rem;color:rgba(255,255,255,.7);line-height:1.8;padding-left:15px;">
+        <li><span style="color:var(--b);">sqlite3.connect()</span> : เชื่อมต่อ Database และ <span style="color:var(--b);">.execute()</span> สั่งรัน SQL</li>
+        <li><span style="color:var(--b);">.commit() / .close()</span> : บันทึกการเปลี่ยนแปลง / ปิดการเชื่อมต่อ Database</li>
+        <li><span style="color:var(--b);">open('f.txt', 'r')</span> : เปิดอ่านไฟล์ <span style="color:var(--b);">.read()</span> อ่านทั้งหมด <span style="color:var(--b);">.write()</span> เขียนข้อมูล</li>
+      </ul>
+    </div>
+
     <div>
-      <h3 style="font-family:var(--font1);font-size:.85rem;color:var(--r);letter-spacing:3px;margin-bottom:10px;padding-left:12px;border-left:3px solid var(--r);">7. SURVIVAL (Advanced - โหดพิเศษ)</h3>
+      <h3 style="font-family:var(--font1);font-size:.85rem;color:var(--r);letter-spacing:3px;margin-bottom:10px;padding-left:12px;border-left:3px solid var(--r);">9. SURVIVAL (Advanced - โหดพิเศษ)</h3>
       <ul style="list-style:none;font-family:var(--font2);font-size:.78rem;color:rgba(255,255,255,.7);line-height:1.8;padding-left:15px;">
         <li><span style="color:var(--b);">Comprehension</span> : การสร้าง List ในบรรทัดเดียว [x for x in r]</li>
         <li><span style="color:var(--b);">lambda</span> : ฟังก์ชันขนาดสั้นแบบไม่มีชื่อ</li>
@@ -359,6 +370,7 @@
 <script>
 /* ============================================================
    PYTHON HUNTER v4 — CLIENT JS
+   Full rewrite: Solo + Multiplayer (Socket.IO)
    ============================================================ */
 
 (function(){
@@ -490,6 +502,7 @@ function goMission(){
   G.playerName=n.toUpperCase().slice(0,12); G.selectedTime=getSelectedTime(); G.mode='solo';
   showScene('s-mission');
 }
+
 document.getElementById('mission-grid').addEventListener('click',e=>{
   const btn=e.target.closest('.mbtn[data-mode]'); if(!btn)return;
   SFX.nav();G.startSolo(btn.dataset.mode);
@@ -525,15 +538,6 @@ function showLeaderboard(){
   showScene('s-lb');
 }
 
-function updateChampion(){
-  const lb=G.loadLB();
-  if(lb.length){
-    document.getElementById('cname').textContent=lb[0].name;
-    document.getElementById('cscore').textContent=lb[0].score.toLocaleString();
-  }
-}
-
-// อัลกอริทึมจัดเรียงคำถาม (ง่ายไปยาก) แบบเดียวกันกับ Server
 function sortAndShuffleByLevel(pool) {
   const grouped = {};
   pool.forEach(q => {
@@ -566,6 +570,10 @@ const G={
     const lb=this.loadLB();
     lb.push(entry);lb.sort((a,b)=>b.score-a.score);
     try{localStorage.setItem('ph_lb_v4',JSON.stringify(lb.slice(0,15)));}catch(e){}
+  },
+
+  shuffle(a){
+    const r=[...a]; for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];} return r;
   },
 
   startSolo(modeKey){
@@ -625,13 +633,12 @@ const G={
 
   _typeCode(txt){
     if(this.typingTimer) { clearTimeout(this.typingTimer); this.typingTimer = null; }
-    const el=document.getElementById('q-code'); el.textContent=''; el.classList.add('typing');
+    const el=document.getElementById('q-code'); el.textContent='';el.classList.add('typing');
     let i=0; const strTxt = String(txt); const spd=strTxt.length>30?5:15;
-    
     const type=()=>{
       if(!this.isPlaying) { el.classList.remove('typing'); return; }
       if(i<=strTxt.length){
-        el.textContent=strTxt.substring(0,i); i++; this.typingTimer=setTimeout(type,spd);
+        el.textContent=strTxt.substring(0,i);i++;this.typingTimer=setTimeout(type,spd);
       } else { el.classList.remove('typing'); }
     };
     type();
@@ -653,8 +660,6 @@ const G={
     burstEl(document.getElementById('monster'),this.lastMode==='SURVIVAL'?'#ff2d5b':'#00ff41',14);
     const mon=document.getElementById('monster'); mon.classList.add('hit');setTimeout(()=>mon.classList.remove('hit'),180);
     document.getElementById('izone').classList.add('ok'); this._updateHUD();
-    
-    // เอาเงื่อนไข winScore ออก เกมเล่นคนเดียวจะจบเมื่อเวลาหมด หรือเลือดหมด เท่านั้น
     setTimeout(()=>{document.getElementById('izone').classList.remove('ok');this._nextQ();document.getElementById('ans-inp').focus();},320);
   },
 
@@ -681,24 +686,20 @@ const G={
   },
 
   _win(){
-    this.isPlaying=false; clearInterval(this.timerInterval); if(this.typingTimer) clearTimeout(this.typingTimer);
+    this.isPlaying=false;clearInterval(this.timerInterval); if(this.typingTimer) clearTimeout(this.typingTimer);
     SFX.win(); flash('#ffd700');
     this.saveLB({name:this.playerName,score:this.score,mode:this.lastMode});
     updateChampion(); this._showEnd(true);
   },
   _lose(){
-    this.isPlaying=false; clearInterval(this.timerInterval); if(this.typingTimer) clearTimeout(this.typingTimer);
+    this.isPlaying=false;clearInterval(this.timerInterval); if(this.typingTimer) clearTimeout(this.typingTimer);
     SFX.lose(); flash('#ff2d5b');
     this.saveLB({name:this.playerName,score:this.score,mode:this.lastMode});
     updateChampion(); this._showEnd(false);
   },
 
   playAgain(){
-    SFX.nav(); 
-    this.isPlaying = false;
-    clearInterval(this.timerInterval);
-    if(this.typingTimer) clearTimeout(this.typingTimer);
-    
+    SFX.nav(); this.isPlaying = false; clearInterval(this.timerInterval); if(this.typingTimer) clearTimeout(this.typingTimer);
     if(MP.active){showScene('s-lobby');}else{G.startSolo(G.lastMode);}
   },
 
@@ -755,13 +756,6 @@ const G={
   },
 };
 
-const headStyle=document.createElement('style');
-headStyle.textContent=`
-.win-text{color:var(--gold)!important;text-shadow:var(--sy)!important;animation:wp .8s infinite;}
-.danger-text{color:var(--r)!important;text-shadow:var(--sr)!important;}
-@keyframes wp{0%,100%{transform:scale(1);}50%{transform:scale(1.03);}}
-`;document.head.appendChild(headStyle);
-
 const MP={
   socket:null, active:false, roomCode:null, isHost:false, myId:null, myName:'', isReady:false, gameMode:null, gameTimeLimit:60,
 
@@ -786,7 +780,7 @@ const MP={
       document.getElementById('start-btn').style.display='none'; document.getElementById('ready-btn').style.display='block';
       showScene('s-lobby');SFX.join();toast('เข้าร่วมสำเร็จ!','b');
     });
-    s.on('you_are_host',()=>{ this.isHost=true; document.getElementById('start-btn').style.display='block'; document.getElementById('ready-btn').style.display='none'; toast('คุณเป็น Host แล้ว','y'); });
+    s.on('you_are_host',()=>{ this.isHost=true; document.getElementById('start-btn').style.display='block'; document.getElementById('ready-btn').style.display='none'; toast('คุณเป็น Host Host แล้ว','y'); });
     s.on('room_update',data=>this._renderLobby(data));
     s.on('chat_msg',data=>{ addChat(document.getElementById('lobby-chat'),data); });
     s.on('game_started',data=>{
@@ -896,7 +890,7 @@ function showJoinPanel(){
 function createRoom(){
   SFX.nav(); const n=document.getElementById('name-multi').value.trim();
   if(!n){toast('ใส่ชื่อก่อน!','r');document.getElementById('name-multi').focus();return;}
-  MP.myName=n.toUpperCase().slice(0,12); MP.connect();
+  MP.myName=n.toUpperCase().slice(0,12); MP.connect(); const t=getSelectedTime();
   _showModePickerForMP((mode, timeLimit)=>{ MP.socket.emit('create_room',{playerName:MP.myName,mode,timeLimit}); });
 }
 
@@ -906,7 +900,6 @@ function joinRoom(){
   MP.myName=n.toUpperCase().slice(0,12); MP.connect(); setTimeout(()=>{ MP.socket.emit('join_room',{playerName:MP.myName,roomCode:code}); },300);
 }
 
-// ย้ายปุ่มเลือกเวลามาไว้ในหน้าต่างสร้างห้อง
 function _showModePickerForMP(cb){
   const ol=document.createElement('div'); ol.style.cssText=`position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.85);display:flex;justify-content:center;align-items:center;padding:20px;`;
   const box=document.createElement('div'); box.style.cssText=`background:var(--glass);border:1px solid var(--g);padding:20px;max-width:460px;width:100%;`;
@@ -934,7 +927,6 @@ function _showModePickerForMP(cb){
       <button onclick="document.body.removeChild(this.closest('.mpp-ov'));" style="background:transparent;border:1px solid var(--border);color:var(--dim);padding:11px 16px;font-family:var(--font2);font-size:.75rem;cursor:pointer;">✕</button>
     </div>
   `;
-  // Add CSS for active button state inside modal
   const style = document.createElement('style');
   style.innerHTML = `.mpp-btn.on, .t-btn-mp.on { border-color:var(--g) !important; color:var(--g) !important; background:rgba(0,255,65,.1) !important; box-shadow:var(--sg); }`;
   box.appendChild(style);
@@ -968,10 +960,7 @@ function handleItem(item) {
   if (typeof MP !== 'undefined' && MP.active && G.isPlaying) { MP.useItem(item); } else { G.useItem(item); }
 }
 
-updateChampion();
-
-// ดึงโจทย์ทั้งหมดจาก questions.js ฝั่งเซิร์ฟเวอร์มาไว้ที่นี่แบบเป๊ะๆ
-const SOLO_QUESTIONS = [
+const SOLO_QUESTIONS=[
   { id:101, mode:'BASICS', level:1, text:"โจทย์: คำสั่งแสดงผลข้อความออกหน้าจอ\nคำแนะนำ: เติมชื่อฟังก์ชันที่ใช้แสดงข้อความหรือค่าตัวแปรออกทางหน้าจอ", code:"____('Hello World')", ans:"print", explanation:"print() ใช้แสดงผลข้อมูลออกหน้าจอ" },
   { id:102, mode:'BASICS', level:1, text:"โจทย์: รับค่าจากผู้ใช้งาน (Keyboard)\nคำแนะนำ: เติมฟังก์ชันที่ใช้รับค่าจากคีย์บอร์ด แล้วเก็บไว้ในตัวแปร", code:"name = ____('Enter Name: ')", ans:"input", explanation:"input() รับค่าจากผู้ใช้ และค่าที่ได้จะเป็น string เสมอ" },
   { id:103, mode:'BASICS', level:1, text:"โจทย์: แปลงข้อความให้เป็นจำนวนเต็ม\nคำแนะนำ: เติมฟังก์ชันที่ใช้แปลง string เป็นจำนวนเต็ม", code:"score = ____('50')", ans:"int", explanation:"int() ใช้แปลงข้อมูลเป็นจำนวนเต็ม" },
@@ -1103,3 +1092,8 @@ const SOLO_QUESTIONS = [
   { id:719, mode:'SURVIVAL', level:7, text:"โจทย์: Deep copy\nคำแนะนำ: เติมชื่อฟังก์ชันจาก module copy ที่ใช้คัดลอกทะลุทะลวง", code:"b = copy.____(a)", ans:"deepcopy", explanation:"deepcopy คัดลอกข้อมูลซ้อนลึก ไม่ผูกกับต้นฉบับ" },
   { id:720, mode:'SURVIVAL', level:7, text:"โจทย์: Zip หลายลิสต์เข้าด้วยกัน\nคำแนะนำ: เติมฟังก์ชันที่ใช้รวมค่าจากลิสต์ a และ b ตามตำแหน่ง", code:"pairs = list(____(a, b))", ans:"zip", explanation:"zip() รวบรวมค่าจากหลาย iterable ตามตำแหน่ง (index) เดียวกัน" }
 ];
+
+updateChampion(); // ย้ายมาเรียกตอนท้ายสุด เพื่อป้องกันบั๊กจอค้าง
+</script>
+</body>
+</html>
