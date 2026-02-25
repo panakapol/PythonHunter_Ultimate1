@@ -369,7 +369,6 @@
 <script>
 /* ============================================================
    PYTHON HUNTER v4 — CLIENT JS
-   Full rewrite: Solo + Multiplayer (Socket.IO)
    ============================================================ */
 
 (function(){
@@ -535,14 +534,6 @@ function showLeaderboard(){
     });
   }
   showScene('s-lb');
-}
-
-function updateChampion(){
-  const lb=G.loadLB();
-  if(lb.length){
-    document.getElementById('cname').textContent=lb[0].name;
-    document.getElementById('cscore').textContent=lb[0].score.toLocaleString();
-  }
 }
 
 function sortAndShuffleByLevel(pool) {
@@ -731,7 +722,6 @@ const G={
     clearInterval(this.timerInterval);
     if(this.typingTimer) clearTimeout(this.typingTimer);
     
-    // FIX: ทำให้ล็อบบี้กลับมาสภาพเดิมเวลาอยากเล่นซ้ำ
     if(MP.active){
         MP.isReady = false;
         const btn = document.getElementById('ready-btn');
@@ -743,7 +733,6 @@ const G={
   },
 
   _showEnd(won){
-    // FIX: ปรับข้อความแพ้ชนะให้ตรงกติกา โหมดเล่นคนเดียว
     const txt = won ? 'MISSION COMPLETE' : 'MISSION FAILED';
     document.getElementById('end-title').textContent = txt;
     document.getElementById('end-title').className = won ? 'title win-text' : 'title danger-text';
@@ -799,13 +788,6 @@ const G={
     document.getElementById('btn-skip').disabled=!this.isPlaying||skips<=0;
   },
 };
-
-const headStyle=document.createElement('style');
-headStyle.textContent=`
-.win-text{color:var(--gold)!important;text-shadow:var(--sy)!important;animation:wp .8s infinite;}
-.danger-text{color:var(--r)!important;text-shadow:var(--sr)!important;}
-@keyframes wp{0%,100%{transform:scale(1);}50%{transform:scale(1.03);}}
-`;document.head.appendChild(headStyle);
 
 const MP={
   socket:null, active:false, roomCode:null, isHost:false, myId:null, myName:'', isReady:false, gameMode:null, gameTimeLimit:60,
@@ -887,7 +869,7 @@ const MP={
     const cnt=document.getElementById('lobby-count'); const pl=document.getElementById('lobby-players');
     cnt.textContent=`${data.players.length}/8 players`; pl.innerHTML='';
     
-    // FIX: ตรวจสอบว่าทุกคนพร้อมหรือยัง (ยกเว้นหัวห้อง)
+    // Check if everyone except host is ready
     let allGuestsReady = true;
     let guestCount = 0;
 
@@ -904,7 +886,7 @@ const MP={
       pl.appendChild(d);
     });
 
-    // ถ้าตัวเองเป็นหัวห้อง จะปลดล็อกปุ่ม Start ได้ก็ต่อเมื่อทุกคนพร้อม
+    // Toggle start button state for host based on readiness
     if (this.isHost) {
         const startBtn = document.getElementById('start-btn');
         if ((guestCount > 0 && allGuestsReady) || guestCount === 0) {
@@ -948,7 +930,8 @@ const MP={
   },
 
   submit(){
-    if(!this.isPlaying||!this.currentQ)return; const ans=document.getElementById('ans-inp').value.trim(); if(!ans)return;
+    // FIX: Using G.isPlaying and G.currentQ instead of this 
+    if(!G.isPlaying||!G.currentQ)return; const ans=document.getElementById('ans-inp').value.trim(); if(!ans)return;
     SFX.init(); this.socket.emit('submit_answer',{answer:ans});
   },
 
@@ -966,7 +949,7 @@ function showJoinPanel(){
 function createRoom(){
   SFX.nav(); const n=document.getElementById('name-multi').value.trim();
   if(!n){toast('ใส่ชื่อก่อน!','r');document.getElementById('name-multi').focus();return;}
-  MP.myName=n.toUpperCase().slice(0,12); MP.connect(); const t=getSelectedTime();
+  MP.myName=n.toUpperCase().slice(0,12); MP.connect();
   _showModePickerForMP((mode, timeLimit)=>{ MP.socket.emit('create_room',{playerName:MP.myName,mode,timeLimit}); });
 }
 
@@ -1168,6 +1151,8 @@ const SOLO_QUESTIONS=[
   { id:719, mode:'SURVIVAL', level:7, text:"โจทย์: Deep copy\nคำแนะนำ: เติมชื่อฟังก์ชันจาก module copy ที่ใช้คัดลอกทะลุทะลวง", code:"b = copy.____(a)", ans:"deepcopy", explanation:"deepcopy คัดลอกข้อมูลซ้อนลึก ไม่ผูกกับต้นฉบับ" },
   { id:720, mode:'SURVIVAL', level:7, text:"โจทย์: Zip หลายลิสต์เข้าด้วยกัน\nคำแนะนำ: เติมฟังก์ชันที่ใช้รวมค่าจากลิสต์ a และ b ตามตำแหน่ง", code:"pairs = list(____(a, b))", ans:"zip", explanation:"zip() รวบรวมค่าจากหลาย iterable ตามตำแหน่ง (index) เดียวกัน" }
 ];
+
+updateChampion();
 </script>
 </body>
 </html>
