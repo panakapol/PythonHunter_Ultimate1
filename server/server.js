@@ -8,6 +8,7 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 
+const axios = require("axios");
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -184,6 +185,32 @@ io.on('connection', (socket) => {
     io.to(info.roomCode).emit('score_update', getScoreboard(room));
   });
 
+  socket.on('send_chat', ({ text }) => {
+  const info = players.get(socket.id);
+  if (!info || !text) return;
+  const msg = text.trim().slice(0, 80);
+  if (!msg) return;
+  io.to(info.roomCode).emit('chat_msg', { name: info.name, text: msg });
+});
+
+socket.on('send_feedback', async ({ message }) => {
+  try {
+    if (!process.env.DISCORD_WEBHOOK_URL) return;
+
+    const info = players.get(socket.id);
+    const name = info ? info.name : "UNKNOWN";
+
+    await axios.post(process.env.DISCORD_WEBHOOK_URL, {
+      content: `📩 FEEDBACK จาก ${name}\n\n${message}`
+    });
+
+    socket.emit("feedback_sent");
+
+  } catch (err) {
+    console.error("Feedback error:", err.message);
+  }
+});
+
   socket.on('disconnect', () => {
     const info = players.get(socket.id); if (!info) return;
     const room = rooms.get(info.roomCode); players.delete(socket.id); if (!room) return;
@@ -194,13 +221,9 @@ io.on('connection', (socket) => {
     if (room.hostId === socket.id) { room.hostId = room.players.keys().next().value; io.to(room.hostId).emit('you_are_host'); }
     io.to(info.roomCode).emit('room_update', serializeRoom(room)); checkAllDone(room, info.roomCode);
   });
+  }); 
 
-  socket.on('send_chat', ({ text }) => {
-    const info = players.get(socket.id); if (!info || !text) return;
-    const msg = text.trim().slice(0, 80); if (!msg) return;
-    io.to(info.roomCode).emit('chat_msg', { name: info.name, text: msg });
-  });
-});
+  
 
 function startRoomTimer(room, roomCode) {
   clearRoomTimer(room);
@@ -224,6 +247,7 @@ function endGame(room, roomCode, reason) {
   const scoreboard = getScoreboard(room);
   scoreboard.forEach((p, i) => { const rp = room.players.get(p.socketId); if (rp && !rp.done) rp.rank = i + 1; });
   io.to(roomCode).emit('game_ended', { scoreboard, reason });
+  
   
   setTimeout(() => {
     if (rooms.has(roomCode)) {
@@ -251,6 +275,8 @@ function serializeRoom(room) {
 }
 
 function serializeQuestion(q) { if (!q) return null; return { id: q.id, text: q.text, code: q.code, mode: q.mode, level: q.level }; }
+
+
 
 const PORT = process.env.PORT || 10000;
 httpServer.listen(PORT, () => {

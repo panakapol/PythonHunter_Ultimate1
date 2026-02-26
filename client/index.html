@@ -1104,6 +1104,155 @@ const SOLO_QUESTIONS = [
 ];
 
 updateChampion();
+
+
+</script>
+<!-- ===== FEEDBACK BUTTON ===== -->
+<button id="feedbackBtn">Feedback</button>
+
+<!-- ===== FEEDBACK MODAL ===== -->
+<div id="feedbackModal" class="fb-modal">
+  <div class="fb-content">
+    <h2>ส่ง Feedback</h2>
+
+    <input type="text" id="fbName" placeholder="ชื่อผู้ส่ง (ไม่บังคับ)" />
+
+    <textarea id="fbMessage" placeholder="พิมพ์ปัญหาที่พบ..." required></textarea>
+
+    <div class="fb-actions">
+      <button class="fb-cancel">ยกเลิก</button>
+      <button class="fb-send">ส่ง</button>
+    </div>
+  </div>
+</div>
+
+<style>
+#feedbackBtn {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  padding: 14px 22px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #4e73df, #1cc88a);
+  color: white;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  transition: 0.3s;
+  z-index: 9999;
+}
+
+#feedbackBtn:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.fb-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 9998;
+}
+
+.fb-content {
+  background: white;
+  padding: 25px;
+  width: 350px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  animation: fadeIn 0.3s ease;
+}
+
+.fb-content h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.fb-content input,
+.fb-content textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.fb-content textarea {
+  min-height: 90px;
+  resize: none;
+}
+
+.fb-actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.fb-cancel {
+  background: #ccc;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.fb-send {
+  background: #4e73df;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.fb-send:hover {
+  opacity: 0.9;
+}
+
+@keyframes fadeIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+</style>
+
+<script>
+const feedbackBtn = document.getElementById("feedbackBtn");
+const feedbackModal = document.getElementById("feedbackModal");
+const cancelBtn = document.querySelector(".fb-cancel");
+const sendBtn = document.querySelector(".fb-send");
+
+feedbackBtn.onclick = () => {
+  feedbackModal.style.display = "flex";
+};
+
+cancelBtn.onclick = () => {
+  feedbackModal.style.display = "none";
+};
+
+sendBtn.onclick = () => {
+  const name = document.getElementById("fbName").value.trim();
+  const message = document.getElementById("fbMessage").value.trim();
+
+  if (!message) {
+    alert("กรุณาพิมพ์ปัญหาที่พบ");
+    return;
+  }
+
+  socket.emit("send_feedback", {
+    message: name ? `จาก ${name}\n\n${message}` : message
+  });
+
+  feedbackModal.style.display = "none";
+  document.getElementById("fbName").value = "";
+  document.getElementById("fbMessage").value = "";
+
+  alert("ส่ง Feedback แล้ว ขอบคุณครับ!");
+};
 </script>
 </body>
 </html>
