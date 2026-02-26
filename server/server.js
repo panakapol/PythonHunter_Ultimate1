@@ -7,6 +7,7 @@ const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const https = require('https'); // ใช้ https ดั้งเดิมของ Node.js (ผ่าน Render แน่นอน 100%)
 
 const app = express();
 const httpServer = createServer(app);
@@ -23,31 +24,41 @@ app.use(express.json());
 // =============================================
 const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1476523032724897934/fTs7BFEjVQwi2A94u41auQLspkrG5IcsWZvT0fKZh1S0F9Oa1BrMmA_ryV_NIC8jJo_-";
 
-app.post('/api/feedback', async (req, res) => {
-  try {
-    const { name, message } = req.body;
-    if (!message) return res.status(400).json({ error: 'Message required' });
+app.post('/api/feedback', (req, res) => {
+  const { name, message } = req.body;
+  if (!message) return res.status(400).json({ error: 'Message required' });
 
-    const payload = {
-      content: `🚨 **NEW FEEDBACK: PYTHON HUNTER** 🚨\n**From:** ${name || 'Anonymous'}\n**Message:**\n>>> ${message}`
-    };
+  const payload = JSON.stringify({
+    content: `🚨 **NEW FEEDBACK: PYTHON HUNTER** 🚨\n**From:** ${name || 'Anonymous'}\n**Message:**\n>>> ${message}`
+  });
 
-    const response = await fetch(DISCORD_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+  const url = new URL(DISCORD_WEBHOOK_URL);
+  const options = {
+    hostname: url.hostname,
+    path: url.pathname,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(payload)
+    }
+  };
 
-    if (response.ok) {
+  const request = https.request(options, (response) => {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
       res.json({ success: true });
     } else {
-      console.error('Discord API Error:', response.status);
+      console.error('Discord API Error:', response.statusCode);
       res.status(500).json({ error: 'Discord API Error' });
     }
-  } catch (err) {
+  });
+
+  request.on('error', (err) => {
     console.error('Webhook Request Error:', err);
     res.status(500).json({ error: 'Failed to send' });
-  }
+  });
+
+  request.write(payload);
+  request.end();
 });
 
 // Serve static frontend files
