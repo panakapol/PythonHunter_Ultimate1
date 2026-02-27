@@ -1242,9 +1242,18 @@ updateChampion();
     feedbackModal.style.display = "none";
   };
 
+  // Discord Webhook URL — ส่งตรงจาก Client เลย ไม่ผ่าน Server
+  const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1476911856919515208/mBLMw9ch8iYF8adXSCcTlz99TGVpMrhDaSEbHikBMCj38quhZKNv3VD0AVmXRe3AEPgd";
+  let feedbackCooldown = false;
+
   // กดปุ่มส่ง
-  sendBtn.onclick = () => {
-    const name = document.getElementById("fbName").value.trim();
+  sendBtn.onclick = async () => {
+    if (feedbackCooldown) {
+      alert("รอ 5 วินาทีก่อนส่งอีกครั้ง");
+      return;
+    }
+
+    const name = document.getElementById("fbName").value.trim() || "ไม่ระบุชื่อ";
     const message = document.getElementById("fbMessage").value.trim();
 
     if (!message) {
@@ -1255,31 +1264,34 @@ updateChampion();
     sendBtn.innerText = "กำลังส่ง...";
     sendBtn.disabled = true;
 
-    socket.emit("send_feedback", {
-      name: name,
-      message: message
-    });
+    try {
+      const res = await fetch(DISCORD_WEBHOOK, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: `📩 **FEEDBACK REPORT**\n**👤 จาก:** ${name}\n**📝 ข้อความ:** ${message}`
+        })
+      });
+
+      if (res.ok || res.status === 204) {
+        feedbackModal.style.display = "none";
+        document.getElementById("fbName").value = "";
+        document.getElementById("fbMessage").value = "";
+        alert("✅ ส่งเข้า Discord เรียบร้อยแล้ว ขอบคุณครับ!");
+
+        // Cooldown 5 วินาที
+        feedbackCooldown = true;
+        setTimeout(() => { feedbackCooldown = false; }, 5000);
+      } else {
+        alert("❌ ส่งไม่สำเร็จ (Status: " + res.status + ") ลองใหม่อีกครั้ง");
+      }
+    } catch (err) {
+      alert("❌ เกิดข้อผิดพลาด: " + err.message);
+    }
+
+    sendBtn.innerText = "ส่ง";
+    sendBtn.disabled = false;
   };
-
-  // รับคำสั่งเมื่อส่งเข้า Discord "สำเร็จ"
-  socket.on("feedback_success", () => {
-    feedbackModal.style.display = "none";
-    document.getElementById("fbName").value = "";
-    document.getElementById("fbMessage").value = "";
-    
-    sendBtn.innerText = "ส่ง";
-    sendBtn.disabled = false;
-    
-    alert("ส่งเข้า Discord เรียบร้อยแล้ว ขอบคุณครับ!");
-  });
-
-  // รับคำสั่งเมื่อส่งเข้า Discord "ไม่สำเร็จ"
-  socket.on("feedback_error", (errMsg) => {
-    sendBtn.innerText = "ส่ง";
-    sendBtn.disabled = false;
-    
-    alert(errMsg || "ระบบส่งข้อความล้มเหลว กรุณาลองใหม่");
-  });
 </script>
 </body>
 </html>
