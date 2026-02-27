@@ -195,33 +195,49 @@ io.on('connection', (socket) => {
   io.to(info.roomCode).emit('chat_msg', { name: info.name, text: msg });
 });
 
-socket.on('send_feedback', async ({ name, message }) => {
+socket.on('send_feedback', async (data) => {
   try {
     const now = Date.now();
     const lastTime = feedbackCooldown.get(socket.id) || 0;
 
-    // ⛔ กันส่งถี่เกิน 3 วิ
+    // กันส่งรัวๆ
     if (now - lastTime < 3000) {
       return socket.emit("error_msg", "ส่ง Feedback ถี่เกินไป รอ 3 วินาที");
     }
     feedbackCooldown.set(socket.id, now);
 
-    // ดึงชื่อผู้เล่นจากในเกม (ถ้ามี)
-    const info = players.get(socket.id);
-    const senderName = name || (info ? info.name : "ไม่ระบุชื่อ");
+    // รับค่าชื่อและข้อความ
+    const msg = data.message || "ไม่มีข้อความ";
+    const senderName = data.name || (players.get(socket.id) ? players.get(socket.id).name : "ไม่ระบุชื่อ");
 
-    // 🔥 กำหนด URL ตรงนี้เลย ชัวร์สุด 100% (เผื่อ Render อ่าน Env ไม่เจอ)
-    const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || "https://discord.com/api/webhooks/1476665405387837573/DnS6fCdgsh0sxt-QACOM44ZHucdeMRtjF2j-b9wXLtcVEtebPTTxbRblrrfGL9ahgveP";
+    // 1. กำหนด URL แบบในคลิปสอน (ใส่ลิงก์ของคุณตรงๆ เลย)
+    const url = "https://discord.com/api/webhooks/1476665405387837573/DnS6fCdgsh0sxt-QACOM44ZHucdeMRtjF2j-b9wXLtcVEtebPTTxbRblrrfGL9ahgveP";
 
-    // ส่งข้อมูลไป Discord
-    await axios.post(WEBHOOK_URL, {
-      content: `📩 **FEEDBACK REPORT**\n**👤 จาก:** ${senderName}\n**📝 ข้อความ:** ${message}`
+    // 2. จัดเตรียมข้อมูล (เหมือนตัวแปร $POST ใน PHP)
+    const payload = {
+      username: "Python Hunter Bot", // ชื่อบอทที่จะไปโผล่ใน Discord
+      content: `📩 **FEEDBACK REPORT**\n**👤 จากผู้เล่น:** ${senderName}\n**📝 ข้อความ:** ${msg}`
+    };
+
+    // 3. ใช้ fetch ทำหน้าที่ส่งข้อมูล (เหมือน cURL ของ PHP)
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8' // เหมือน $headers ในคลิป
+      },
+      body: JSON.stringify(payload) // เหมือน json_encode ในคลิป
     });
 
-    socket.emit("feedback_sent");
+    // 4. เช็คว่า Discord ตอบกลับว่าสำเร็จไหม
+    if (response.ok) {
+      // ส่งคำสั่งกลับไปบอกหน้าเว็บว่า "เข้า Discord แล้วจริงๆ"
+      socket.emit("feedback_success"); 
+    } else {
+      console.error("ส่งเข้า Discord ไม่สำเร็จ Status:", response.status);
+    }
 
   } catch (err) {
-    console.error("Feedback error:", err.response?.data || err.message);
+    console.error("เกิดข้อผิดพลาดของระบบ:", err);
   }
 });
 

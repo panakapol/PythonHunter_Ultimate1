@@ -1243,18 +1243,30 @@ sendBtn.onclick = () => {
     return;
   }
 
-  // แก้ไขตรงนี้ ให้ส่ง name และ message แยกกัน
+  // เปลี่ยนปุ่มเป็นกำลังส่ง เพื่อป้องกันคนกดรัวๆ
+  sendBtn.innerText = "กำลังส่ง...";
+  sendBtn.disabled = true;
+
+  // ส่งข้อมูลไปหา server.js
   socket.emit("send_feedback", {
     name: name,
     message: message
   });
+};
 
+// เพิ่มส่วนนี้: รับคำสั่งจาก server.js เมื่อข้อความเข้า Discord สำเร็จแล้วจริงๆ
+socket.on("feedback_success", () => {
   feedbackModal.style.display = "none";
   document.getElementById("fbName").value = "";
   document.getElementById("fbMessage").value = "";
-
-  alert("ส่ง Feedback แล้ว ขอบคุณครับ!");
-};
+  
+  // คืนค่าปุ่มให้กดได้ใหม่
+  sendBtn.innerText = "ส่ง";
+  sendBtn.disabled = false;
+  
+  // แจ้งเตือนของจริง!
+  alert("ส่งเข้า Discord เรียบร้อยแล้ว ขอบคุณครับ!");
+});
 </script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
