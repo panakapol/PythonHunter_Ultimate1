@@ -1220,65 +1220,66 @@ updateChampion();
 }
 </style>
 
-<script>
-const feedbackBtn = document.getElementById("feedbackBtn");
-const feedbackModal = document.getElementById("feedbackModal");
-const cancelBtn = document.querySelector(".fb-cancel");
-const sendBtn = document.querySelector(".fb-send");
 
-feedbackBtn.onclick = () => {
-  feedbackModal.style.display = "flex";
-};
-
-cancelBtn.onclick = () => {
-  feedbackModal.style.display = "none";
-};
-
-sendBtn.onclick = () => {
-  const name = document.getElementById("fbName").value.trim();
-  const message = document.getElementById("fbMessage").value.trim();
-
-  if (!message) {
-    alert("กรุณาพิมพ์ปัญหาที่พบ");
-    return;
-  }
-
-  // ล็อกปุ่มกันกดซ้ำ
-  sendBtn.innerText = "กำลังส่ง...";
-  sendBtn.disabled = true;
-
-  // ส่งไปหา server
-  socket.emit("send_feedback", {
-    name: name,
-    message: message
-  });
-};
-
-// รับคำสั่งเมื่อส่ง "สำเร็จ"
-socket.on("feedback_success", () => {
-  feedbackModal.style.display = "none";
-  document.getElementById("fbName").value = "";
-  document.getElementById("fbMessage").value = "";
-  
-  // ปลดล็อกปุ่ม
-  sendBtn.innerText = "ส่ง";
-  sendBtn.disabled = false;
-  
-  alert("ส่งเข้า Discord เรียบร้อยแล้ว ขอบคุณครับ!");
-});
-
-// รับคำสั่งเมื่อส่ง "ไม่สำเร็จ" (ป้องกันปุ่มค้าง)
-socket.on("feedback_error", (errMsg) => {
-  // ปลดล็อกปุ่ม
-  sendBtn.innerText = "ส่ง";
-  sendBtn.disabled = false;
-  
-  alert(errMsg || "ระบบส่งข้อความล้มเหลว กรุณาลองใหม่");
-});
-</script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
+  // 1. นำเข้า socket ก่อนเป็นอันดับแรกสุด!
   const socket = io();
+
+  // 2. ดึงปุ่มต่างๆ มาใช้งาน (ประกาศแค่รอบเดียว)
+  const feedbackBtn = document.getElementById("feedbackBtn");
+  const feedbackModal = document.getElementById("feedbackModal");
+  const cancelBtn = document.querySelector(".fb-cancel");
+  const sendBtn = document.querySelector(".fb-send");
+
+  // เปิดหน้าต่าง
+  feedbackBtn.onclick = () => {
+    feedbackModal.style.display = "flex";
+  };
+
+  // ปิดหน้าต่าง
+  cancelBtn.onclick = () => {
+    feedbackModal.style.display = "none";
+  };
+
+  // กดปุ่มส่ง
+  sendBtn.onclick = () => {
+    const name = document.getElementById("fbName").value.trim();
+    const message = document.getElementById("fbMessage").value.trim();
+
+    if (!message) {
+      alert("กรุณาพิมพ์ปัญหาที่พบ");
+      return;
+    }
+
+    sendBtn.innerText = "กำลังส่ง...";
+    sendBtn.disabled = true;
+
+    socket.emit("send_feedback", {
+      name: name,
+      message: message
+    });
+  };
+
+  // รับคำสั่งเมื่อส่งเข้า Discord "สำเร็จ"
+  socket.on("feedback_success", () => {
+    feedbackModal.style.display = "none";
+    document.getElementById("fbName").value = "";
+    document.getElementById("fbMessage").value = "";
+    
+    sendBtn.innerText = "ส่ง";
+    sendBtn.disabled = false;
+    
+    alert("ส่งเข้า Discord เรียบร้อยแล้ว ขอบคุณครับ!");
+  });
+
+  // รับคำสั่งเมื่อส่งเข้า Discord "ไม่สำเร็จ"
+  socket.on("feedback_error", (errMsg) => {
+    sendBtn.innerText = "ส่ง";
+    sendBtn.disabled = false;
+    
+    alert(errMsg || "ระบบส่งข้อความล้มเหลว กรุณาลองใหม่");
+  });
 </script>
 </body>
 </html>
