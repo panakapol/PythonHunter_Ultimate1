@@ -1243,8 +1243,10 @@ sendBtn.onclick = () => {
     return;
   }
 
+  // แก้ไขตรงนี้ ให้ส่ง name และ message แยกกัน
   socket.emit("send_feedback", {
-    message: name ? `จาก ${name}\n\n${message}` : message
+    name: name,
+    message: message
   });
 
   feedbackModal.style.display = "none";

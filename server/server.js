@@ -195,9 +195,8 @@ io.on('connection', (socket) => {
   io.to(info.roomCode).emit('chat_msg', { name: info.name, text: msg });
 });
 
-socket.on('send_feedback', async ({ message }) => {
+socket.on('send_feedback', async ({ name, message }) => {
   try {
-
     const now = Date.now();
     const lastTime = feedbackCooldown.get(socket.id) || 0;
 
@@ -205,16 +204,18 @@ socket.on('send_feedback', async ({ message }) => {
     if (now - lastTime < 3000) {
       return socket.emit("error_msg", "ส่ง Feedback ถี่เกินไป รอ 3 วินาที");
     }
-
     feedbackCooldown.set(socket.id, now);
 
-    console.log("WEBHOOK:", process.env.DISCORD_WEBHOOK_URL);
-
+    // ดึงชื่อผู้เล่นจากในเกม (ถ้ามี)
     const info = players.get(socket.id);
-    const name = info ? info.name : "UNKNOWN";
+    const senderName = name || (info ? info.name : "ไม่ระบุชื่อ");
 
-    await axios.post(process.env.DISCORD_WEBHOOK_URL, {
-      content: `📩 FEEDBACK จาก ${name}\n\n${message}`
+    // 🔥 กำหนด URL ตรงนี้เลย ชัวร์สุด 100% (เผื่อ Render อ่าน Env ไม่เจอ)
+    const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || "https://discord.com/api/webhooks/1476665405387837573/DnS6fCdgsh0sxt-QACOM44ZHucdeMRtjF2j-b9wXLtcVEtebPTTxbRblrrfGL9ahgveP";
+
+    // ส่งข้อมูลไป Discord
+    await axios.post(WEBHOOK_URL, {
+      content: `📩 **FEEDBACK REPORT**\n**👤 จาก:** ${senderName}\n**📝 ข้อความ:** ${message}`
     });
 
     socket.emit("feedback_sent");
