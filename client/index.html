@@ -24,7 +24,44 @@
 
 <div id="app">
 
-<section id="s-menu" class="scene on">
+<!-- ===== LOGIN / REGISTER SCREEN ===== -->
+<section id="s-auth" class="scene on">
+<div class="mc" style="text-align:center;">
+  <h1 class="title" data-t="PYTHON HUNTER">PYTHON HUNTER</h1>
+  <p class="sub">◈ ULTIMATE EDITION v4.0 ◈</p>
+
+  <div class="panel" style="max-width:380px;margin:0 auto;">
+    <div class="tabs">
+      <button class="tab on" onclick="switchAuthTab('login')">🔑 LOGIN</button>
+      <button class="tab" onclick="switchAuthTab('register')">📝 REGISTER</button>
+    </div>
+
+    <div id="auth-login">
+      <label class="lbl">▸ USERNAME</label>
+      <input id="auth-login-user" class="inp" placeholder="USERNAME..." maxlength="16">
+      <label class="lbl" style="margin-top:10px;">▸ PASSWORD</label>
+      <input id="auth-login-pass" class="inp" type="password" placeholder="PASSWORD..." maxlength="32">
+      <button class="btn btn-lg" style="margin-top:14px;" onclick="doLogin()">[ LOGIN ]</button>
+      <div id="auth-login-err" style="color:var(--r);font-family:var(--font3);font-size:.75rem;margin-top:8px;text-align:center;min-height:18px;"></div>
+    </div>
+
+    <div id="auth-register" style="display:none;">
+      <label class="lbl">▸ USERNAME <span style="color:var(--dim);font-size:.65rem;">(A-Z 0-9 _ , 3-16 ตัว)</span></label>
+      <input id="auth-reg-user" class="inp" placeholder="USERNAME..." maxlength="16">
+      <label class="lbl" style="margin-top:10px;">▸ PASSWORD <span style="color:var(--dim);font-size:.65rem;">(อย่างน้อย 4 ตัว)</span></label>
+      <input id="auth-reg-pass" class="inp" type="password" placeholder="PASSWORD..." maxlength="32">
+      <button class="btn btn-lg" style="margin-top:14px;" onclick="doRegister()">[ CREATE ACCOUNT ]</button>
+      <div id="auth-reg-err" style="color:var(--r);font-family:var(--font3);font-size:.75rem;margin-top:8px;text-align:center;min-height:18px;"></div>
+    </div>
+
+    <div class="sep"></div>
+    <button class="btn" style="width:100%;border-color:var(--border);color:var(--dim);font-size:.7rem;" onclick="playAsGuest()">[ เล่นแบบ Guest — ไม่มีระบบ Ranked ]</button>
+  </div>
+  <p style="font-family:var(--font3);font-size:.6rem;color:var(--dim);margin-top:8px;letter-spacing:2px;">DEV: PANAKAPOL & KONGPHOP · v4.0</p>
+</div>
+</section>
+
+<section id="s-menu" class="scene">
 <div class="mc" style="text-align:center;">
   <h1 class="title" data-t="PYTHON HUNTER">PYTHON HUNTER</h1>
   <p class="sub">◈ ULTIMATE EDITION v4.0 ◈</p>
@@ -33,6 +70,7 @@
     <div class="tabs">
       <button class="tab on" onclick="switchTab('solo')">⚡ SOLO</button>
       <button class="tab" onclick="switchTab('multi')">🌐 MULTIPLAYER</button>
+      <button class="tab" onclick="switchTab('ranked')" id="tab-ranked-btn">🏅 RANKED</button>
     </div>
 
     <div id="tab-solo">
@@ -75,6 +113,33 @@
       </div>
 
       <div id="multi-status" style="margin-top:10px;font-family:var(--font3);font-size:.75rem;color:var(--dim);text-align:center;letter-spacing:2px;"></div>
+    </div>
+
+    <!-- RANKED TAB -->
+    <div id="tab-ranked" style="display:none;">
+      <div id="ranked-guest-msg" style="display:none;text-align:center;padding:16px 0;">
+        <p style="font-family:var(--font3);font-size:.85rem;color:var(--y);margin-bottom:12px;">⚠ ต้อง Login เพื่อเล่นโหมด Ranked</p>
+        <button class="btn btn-lg" onclick="showScene('s-auth')">[ LOGIN / REGISTER ]</button>
+      </div>
+      <div id="ranked-user-panel">
+        <div style="background:rgba(255,229,0,.06);border:1px solid rgba(255,229,0,.3);padding:12px;margin-bottom:12px;text-align:center;">
+          <div style="font-family:var(--font3);font-size:.65rem;color:var(--dim);letter-spacing:2px;">PLAYING AS</div>
+          <div style="font-family:var(--font1);font-size:1rem;color:var(--y);" id="ranked-username-display">---</div>
+          <div style="font-family:var(--font3);font-size:.7rem;color:var(--dim);margin-top:4px;" id="ranked-myrank-display">อันดับของฉันสัปดาห์นี้: --</div>
+        </div>
+        <div style="background:rgba(255,45,91,.06);border:1px solid rgba(255,45,91,.2);padding:10px;margin-bottom:12px;font-family:var(--font3);font-size:.78rem;color:rgba(255,255,255,.8);line-height:1.7;">
+          <div style="color:var(--r);font-family:var(--font1);font-size:.72rem;letter-spacing:2px;margin-bottom:6px;">🏅 RANKED MODE — กติกา</div>
+          ▸ เวลา <span style="color:var(--y);">100 วินาที</span> ตายตัว<br>
+          ▸ สุ่มคำถามจาก <span style="color:var(--g);">ทุกโมดูล</span> พร้อมกัน<br>
+          ▸ ไม่มีไอเทมช่วย — ทดสอบฝีมือจริง<br>
+          ▸ บันทึกเฉพาะ <span style="color:var(--y);">คะแนนสูงสุด</span> ของสัปดาห์นี้<br>
+          ▸ Leaderboard รีเซ็ตทุก <span style="color:var(--b);">วันจันทร์ 00:00</span>
+        </div>
+        <div id="ranked-reset-bar" style="text-align:center;font-family:var(--font3);font-size:.7rem;color:var(--dim);margin-bottom:12px;">รีเซ็ตใน: --</div>
+        <button class="btn btn-lg btn-red" onclick="startRankedMode()" style="width:100%;">🏅 [ START RANKED ]</button>
+        <button class="btn btn-gold" onclick="showRankedLeaderboard()" style="width:100%;margin-top:8px;">[ 🏆 WEEKLY LEADERBOARD TOP 100 ]</button>
+        <button class="btn" onclick="doLogout()" style="width:100%;margin-top:8px;border-color:var(--border);color:var(--dim);font-size:.68rem;">[ LOGOUT ]</button>
+      </div>
     </div>
   </div>
   <p style="font-family:var(--font3);font-size:.6rem;color:var(--dim);margin-top:8px;letter-spacing:2px;">DEV: PANAKAPOL & KONGPHOP · v4.0</p>
@@ -240,6 +305,31 @@
       <tbody id="lb-body"></tbody>
     </table>
     <div id="lb-empty" style="text-align:center;padding:24px;color:var(--dim);font-family:var(--font3);letter-spacing:2px;display:none;">NO RECORDS YET</div>
+  </div>
+  <button class="btn btn-lg" onclick="showScene('s-menu')" style="margin-top:10px;">[ ← BACK ]</button>
+</div>
+</section>
+
+<section id="s-ranked-lb" class="scene scroll-scene">
+<div class="mc" style="width:100%;padding:16px 0 40px;">
+  <h2 class="title" data-t="RANKED TOP 100" style="text-align:center;font-size:clamp(1.2rem,5vw,1.8rem);margin-bottom:4px;">🏅 RANKED TOP 100</h2>
+  <p class="sub" style="text-align:center;" id="ranked-lb-week">WEEKLY LEADERBOARD</p>
+  <div style="text-align:center;font-family:var(--font3);font-size:.72rem;color:var(--y);margin-bottom:12px;" id="ranked-lb-reset">รีเซ็ตใน: --</div>
+
+  <div class="panel">
+    <table style="width:100%;border-collapse:collapse;font-family:var(--font2);font-size:.8rem;">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border);">
+          <th style="padding:8px;text-align:left;font-family:var(--font3);font-size:.6rem;color:var(--b);letter-spacing:2px;">#</th>
+          <th style="padding:8px;text-align:left;font-family:var(--font3);font-size:.6rem;color:var(--b);letter-spacing:2px;">PLAYER</th>
+          <th style="padding:8px;text-align:right;font-family:var(--font3);font-size:.6rem;color:var(--b);letter-spacing:2px;">SCORE</th>
+          <th style="padding:8px;text-align:right;font-family:var(--font3);font-size:.6rem;color:var(--b);letter-spacing:2px;">Q</th>
+        </tr>
+      </thead>
+      <tbody id="ranked-lb-body"></tbody>
+    </table>
+    <div id="ranked-lb-empty" style="text-align:center;padding:24px;color:var(--dim);font-family:var(--font3);letter-spacing:2px;display:none;">ยังไม่มีข้อมูลสัปดาห์นี้</div>
+    <div id="ranked-lb-loading" style="text-align:center;padding:24px;color:var(--b);font-family:var(--font3);letter-spacing:2px;">กำลังโหลด...</div>
   </div>
   <button class="btn btn-lg" onclick="showScene('s-menu')" style="margin-top:10px;">[ ← BACK ]</button>
 </div>
@@ -481,7 +571,9 @@ function switchTab(tab){
   SFX.click();
   document.getElementById('tab-solo').style.display=tab==='solo'?'block':'none';
   document.getElementById('tab-multi').style.display=tab==='multi'?'block':'none';
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',(i===0&&tab==='solo')||(i===1&&tab==='multi')));
+  document.getElementById('tab-ranked').style.display=tab==='ranked'?'block':'none';
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',(i===0&&tab==='solo')||(i===1&&tab==='multi')||(i===2&&tab==='ranked')));
+  if(tab==='ranked') refreshRankedTab();
 }
 
 document.querySelectorAll('.t-btn').forEach(b=>{
@@ -653,7 +745,7 @@ const G={
   },
 
   _onCorrect(){
-    this.combo++; const bonus=this.combo>=5?75:this.combo>=3?50:0; const earned=150+bonus; this.score+=earned;
+    this.combo++; const bonus=this.combo>=5?75:this.combo>=3?50:0; const earned=150+bonus; this.score+=earned; if(this.lastMode==='RANKED') this.rankedQuestionsAnswered++;
     SFX.correct();
     if(this.combo%3===0&&this.combo>0){SFX.combo();this.timer+=10;SFX.bonus();toast('⏱ +10s TIME BONUS!','y');}
     if(this.combo===5){this._updateHP(Math.min(100,this.hp+10));toast('🔥 COMBO ×5 → HP+10!','g');}
@@ -662,7 +754,7 @@ const G={
     const mon=document.getElementById('monster'); mon.classList.add('hit');setTimeout(()=>mon.classList.remove('hit'),180);
     document.getElementById('izone').classList.add('ok'); this._updateHUD();
     
-    if(this.score>=this.winScore){ setTimeout(()=>this._win(),300); return; }
+    if(this.lastMode!=='RANKED' && this.score>=this.winScore){ setTimeout(()=>this._win(),300); return; }
     setTimeout(()=>{ if(!this.gameEnded){ document.getElementById('izone').classList.remove('ok');this._nextQ();document.getElementById('ans-inp').focus(); } },320);
   },
 
@@ -696,7 +788,8 @@ const G={
     updateChampion(); this._showEnd(true);
   },
   _lose(){
-    if(this.gameEnded) return; 
+    if(this.gameEnded) return;
+    if(this.lastMode==='RANKED'){ this._endRanked(); return; }
     this.gameEnded = true; this.isPlaying = false; 
     clearInterval(this.timerInterval); if(this.typingTimer) clearTimeout(this.typingTimer);
     SFX.lose(); flash('#ff2d5b'); this.saveLB({name:this.playerName,score:this.score,mode:this.lastMode});
@@ -710,7 +803,7 @@ const G={
         MP.isReady = false; const btn = document.getElementById('ready-btn');
         btn.textContent = '[ READY ]'; btn.style.borderColor = ''; btn.style.color = ''; btn.style.boxShadow = '';
         showScene('s-lobby');
-    } else { G.startSolo(G.lastMode); }
+    } else if(G.lastMode==='RANKED') { startRankedMode(); } else { G.startSolo(G.lastMode); }
   },
 
   _showEnd(won){
@@ -739,7 +832,7 @@ const G={
       const tbox=document.getElementById('hud-timer').closest('.hbox-b');
       if(this.timer<=10){ tbox.classList.add('danger'); if(!this.lowTimePlayed||this.timer%2===0){SFX.lowtime();this.lowTimePlayed=true;} }else tbox.classList.remove('danger');
       document.getElementById('hud-timer').textContent=this.timer;
-      if(this.timer<=0) { this._lose(); }
+      if(this.timer<=0) { if(this.lastMode==='RANKED'){ this._endRanked(); }else{ this._lose(); } }
     },1000);
   },
 
@@ -762,6 +855,80 @@ const G={
     document.getElementById('btn-potion').disabled=!this.isPlaying||potions<=0;
     document.getElementById('btn-hint').disabled=!this.isPlaying||hints<=0;
     document.getElementById('btn-skip').disabled=!this.isPlaying||skips<=0;
+  },
+
+  // =============================================
+  // RANKED MODE
+  // =============================================
+  rankedQuestionsAnswered: 0,
+
+  _startRanked(){
+    this.lastMode='RANKED'; SFX.init();
+    this.score=0; this.hp=100; this.timer=100; this.combo=0;
+    this.sessionHistory=[]; this.isPlaying=false; this.lowTimePlayed=false;
+    this.hints=0; this.potions=0; this.skips=0; // ไม่มีไอเทมใน ranked
+    this.gameEnded=false; this.rankedQuestionsAnswered=0;
+
+    // สุ่มคำถามทุกโมดูลพร้อมกัน
+    const allQ=[...SOLO_QUESTIONS];
+    for(let i=allQ.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[allQ[i],allQ[j]]=[allQ[j],allQ[i]];}
+    this.questions=allQ; this.qIdx=0;
+    this.winScore=999999; // ranked ไม่มี win score — เล่นจนเวลาหมด
+
+    const mon=document.getElementById('monster'); mon.classList.remove('boss'); this._clearBossRings();
+
+    document.getElementById('hud-name').textContent=this.playerName;
+    document.getElementById('live-sb').style.display='none';
+    // ซ่อนไอเทม
+    document.querySelector('.pups').style.display='none';
+    this._updateHUD(); document.getElementById('hint-line').textContent='';
+
+    // ป้าย RANKED ใน HUD
+    document.getElementById('q-mode').textContent='RANKED';
+
+    showScene('s-game');
+    setTimeout(()=>{
+      this.isPlaying=true; this._nextQ(); this._startTimer();
+      document.getElementById('ans-inp').focus();
+    },350);
+  },
+
+  _winRanked(){
+    // ไม่มี win ใน ranked mode ปล่อยให้ timer หมด
+  },
+
+  async _endRanked(){
+    if(this.gameEnded) return;
+    this.gameEnded=true; this.isPlaying=false;
+    clearInterval(this.timerInterval); if(this.typingTimer) clearTimeout(this.typingTimer);
+    document.querySelector('.pups').style.display=''; // คืน pups
+
+    SFX.lose(); flash('#ffe500');
+
+    // Submit to server
+    if(AUTH.isLoggedIn()){
+      try{
+        const res=await fetch('/api/ranked/submit',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-auth-token':AUTH.token},
+          body:JSON.stringify({score:this.score, questionsAnswered:this.rankedQuestionsAnswered})
+        });
+        const data=await res.json();
+        if(data.isNewBest) toast('🏆 คะแนนสูงสุดใหม่ของสัปดาห์!','y');
+        else toast('บันทึกคะแนนแล้ว!','b');
+      }catch(e){ toast('บันทึกคะแนนไม่สำเร็จ','r'); }
+    }
+
+    // Show end screen
+    document.getElementById('end-title').textContent='RANKED — TIME UP!';
+    document.getElementById('end-title').className='title win-text';
+    document.getElementById('end-title').dataset.t='RANKED — TIME UP!';
+    document.getElementById('end-name').textContent=this.playerName;
+    document.getElementById('end-score').textContent=this.score.toLocaleString();
+    document.getElementById('end-mode').textContent='RANKED ('+this.rankedQuestionsAnswered+' คำถาม)';
+    document.getElementById('end-multi-sb').style.display='none';
+    document.getElementById('end-review').style.display='none';
+    setTimeout(()=>showScene('s-end'),400);
   }
 };
 
@@ -1102,6 +1269,168 @@ const SOLO_QUESTIONS = [
   { id:919, mode:'FILE', level:5, text:"โจทย์: ลบไฟล์ออกจากระบบ\nคำแนะนำ: เติมฟังก์ชันจากโมดูล os สำหรับลบไฟล์", code:"import os\nos.____('old.txt')", ans:"remove", explanation:"os.remove() ใช้ลบไฟล์ทิ้งไปจากเครื่อง" },
   { id:920, mode:'FILE', level:5, text:"โจทย์: ตรวจสอบว่ามีไฟล์อยู่หรือไม่\nคำแนะนำ: เติมฟังก์ชันจากโมดูล os.path เพื่อเช็คการมีอยู่ของไฟล์", code:"os.path.____('data.txt')", ans:"exists", explanation:"os.path.exists() คืนค่า True ถ้าไฟล์นั้นมีอยู่จริง" }
 ];
+
+// =============================================
+// AUTH SYSTEM
+// =============================================
+const AUTH = {
+  token: localStorage.getItem('ph_token') || null,
+  username: localStorage.getItem('ph_username') || null,
+  isLoggedIn(){ return !!this.token && !!this.username; },
+  save(token, username){ this.token=token; this.username=username; localStorage.setItem('ph_token',token); localStorage.setItem('ph_username',username); },
+  clear(){ this.token=null; this.username=null; localStorage.removeItem('ph_token'); localStorage.removeItem('ph_username'); }
+};
+let isGuest = false;
+
+function switchAuthTab(tab){
+  SFX.click();
+  document.getElementById('auth-login').style.display=tab==='login'?'block':'none';
+  document.getElementById('auth-register').style.display=tab==='register'?'block':'none';
+  const tabs=document.querySelectorAll('#s-auth .tab');
+  tabs.forEach((t,i)=>t.classList.toggle('on',(i===0&&tab==='login')||(i===1&&tab==='register')));
+}
+
+async function doLogin(){
+  SFX.nav();
+  const user=document.getElementById('auth-login-user').value.trim();
+  const pass=document.getElementById('auth-login-pass').value;
+  const errEl=document.getElementById('auth-login-err');
+  errEl.textContent='';
+  if(!user||!pass){errEl.textContent='กรุณาใส่ Username และ Password';return;}
+  errEl.textContent='กำลังเข้าสู่ระบบ...';
+  try{
+    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:user,password:pass})});
+    const data=await res.json();
+    if(data.success){ AUTH.save(data.token,data.username); isGuest=false; enterGame(); }
+    else errEl.textContent=data.error||'เข้าสู่ระบบไม่สำเร็จ';
+  }catch(e){ errEl.textContent='เกิดข้อผิดพลาด: '+e.message; }
+}
+
+async function doRegister(){
+  SFX.nav();
+  const user=document.getElementById('auth-reg-user').value.trim();
+  const pass=document.getElementById('auth-reg-pass').value;
+  const errEl=document.getElementById('auth-reg-err');
+  errEl.textContent='';
+  if(!user||!pass){errEl.textContent='กรุณาใส่ Username และ Password';return;}
+  errEl.textContent='กำลังสร้างบัญชี...';
+  try{
+    const res=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:user,password:pass})});
+    const data=await res.json();
+    if(data.success){ AUTH.save(data.token,data.username); isGuest=false; toast('สร้างบัญชีสำเร็จ! ยินดีต้อนรับ '+data.username,'g'); enterGame(); }
+    else errEl.textContent=data.error||'สร้างบัญชีไม่สำเร็จ';
+  }catch(e){ errEl.textContent='เกิดข้อผิดพลาด: '+e.message; }
+}
+
+function playAsGuest(){
+  SFX.nav(); isGuest=true; AUTH.clear(); enterGame();
+}
+
+async function doLogout(){
+  SFX.click();
+  if(AUTH.token){
+    try{ await fetch('/api/logout',{method:'POST',headers:{'x-auth-token':AUTH.token}}); }catch(e){}
+  }
+  AUTH.clear(); isGuest=false;
+  showScene('s-auth');
+}
+
+function enterGame(){
+  // ถ้า login แล้ว ใส่ชื่อ username ให้อัตโนมัติ
+  if(AUTH.isLoggedIn()){
+    const u=AUTH.username;
+    document.getElementById('name-solo').value=u;
+    document.getElementById('name-multi').value=u;
+  }
+  showScene('s-menu');
+  updateChampion();
+}
+
+// Check if already logged in on page load
+(function checkAutoLogin(){
+  if(AUTH.isLoggedIn()){ enterGame(); }
+  // else stay on s-auth (already on)
+})();
+
+// =============================================
+// RANKED MODE
+// =============================================
+let rankedResetTimer=null;
+
+function refreshRankedTab(){
+  if(isGuest||!AUTH.isLoggedIn()){
+    document.getElementById('ranked-guest-msg').style.display='block';
+    document.getElementById('ranked-user-panel').style.display='none';
+    return;
+  }
+  document.getElementById('ranked-guest-msg').style.display='none';
+  document.getElementById('ranked-user-panel').style.display='block';
+  document.getElementById('ranked-username-display').textContent=AUTH.username;
+  // Load my rank
+  fetch('/api/ranked/myrank',{headers:{'x-auth-token':AUTH.token}})
+    .then(r=>r.json()).then(data=>{
+      if(data.rank) document.getElementById('ranked-myrank-display').textContent=`อันดับของฉัน: #${data.rank} | คะแนน: ${(data.score||0).toLocaleString()}`;
+      else document.getElementById('ranked-myrank-display').textContent='ยังไม่เคยเล่น Ranked สัปดาห์นี้';
+    }).catch(()=>{});
+  // Load reset timer
+  fetch('/api/ranked/leaderboard')
+    .then(r=>r.json()).then(data=>{
+      if(data.nextReset) startResetCountdown(data.nextReset, 'ranked-reset-bar');
+    }).catch(()=>{});
+}
+
+function startResetCountdown(ms, elId){
+  clearInterval(rankedResetTimer);
+  let remaining=ms;
+  function update(){
+    if(remaining<=0){ document.getElementById(elId).textContent='รีเซ็ตแล้ว! (รีโหลดหน้า)'; return; }
+    const h=Math.floor(remaining/3600000); const m=Math.floor((remaining%3600000)/60000); const s=Math.floor((remaining%60000)/1000);
+    document.getElementById(elId).textContent=`รีเซ็ตใน: ${h}h ${m}m ${s}s`;
+    remaining-=1000;
+  }
+  update(); rankedResetTimer=setInterval(update,1000);
+}
+
+function startRankedMode(){
+  if(!AUTH.isLoggedIn()){showScene('s-auth');return;}
+  SFX.nav();
+  G.playerName=AUTH.username;
+  G.selectedTime=100;
+  G.mode='ranked';
+  G._startRanked();
+}
+
+async function showRankedLeaderboard(){
+  SFX.nav(); showScene('s-ranked-lb');
+  document.getElementById('ranked-lb-loading').style.display='block';
+  document.getElementById('ranked-lb-empty').style.display='none';
+  document.getElementById('ranked-lb-body').innerHTML='';
+  try{
+    const res=await fetch('/api/ranked/leaderboard');
+    const data=await res.json();
+    document.getElementById('ranked-lb-loading').style.display='none';
+    document.getElementById('ranked-lb-week').textContent='สัปดาห์ที่เริ่ม: '+data.weekKey;
+    if(data.nextReset) startResetCountdown(data.nextReset,'ranked-lb-reset');
+    const lb=data.leaderboard||[];
+    if(!lb.length){ document.getElementById('ranked-lb-empty').style.display='block'; return; }
+    const icons=['🥇','🥈','🥉'];
+    const body=document.getElementById('ranked-lb-body');
+    lb.forEach((p,i)=>{
+      const isMe=AUTH.isLoggedIn()&&p.username===AUTH.username;
+      const clr=i===0?'var(--gold)':i===1?'#c0c0c0':i===2?'#cd7f32':'rgba(255,255,255,.75)';
+      const tr=document.createElement('tr');
+      tr.style.background=isMe?'rgba(255,229,0,.08)':'';
+      tr.innerHTML=`<td style="padding:8px;color:${clr};font-family:var(--font1);text-align:left;">${icons[i]||i+1}</td>
+        <td style="padding:8px;color:${isMe?'var(--y)':'#fff'};font-family:var(--font2);">${p.username}${isMe?' ◀':''}  </td>
+        <td style="padding:8px;text-align:right;color:var(--y);font-weight:bold;font-family:var(--font1);">${(p.score||0).toLocaleString()}</td>
+        <td style="padding:8px;text-align:right;color:var(--dim);font-size:.7rem;">${p.questionsAnswered||0}Q</td>`;
+      body.appendChild(tr);
+    });
+  }catch(e){
+    document.getElementById('ranked-lb-loading').textContent='โหลดไม่สำเร็จ: '+e.message;
+  }
+}
+
 
 updateChampion();
 
